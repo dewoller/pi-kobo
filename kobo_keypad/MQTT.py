@@ -7,9 +7,10 @@ import time
 class MQTT:
 
     def __init__(self, outQ):
-        def on_message(obj, msg):
+        def on_message(obj, userdata, msg):
             print("Message received on topic "+msg.topic+" with QoS "+str(msg.qos)+" and payload "+msg.payload)
-            self.outQ.put(msg.payload);
+            event = [int(msg.payload[0]), msg.payload[2:]]
+            self.outQ.put(event);
 
         self.outQ = outQ
         self.client = mosquitto.Mosquitto("kobo")
