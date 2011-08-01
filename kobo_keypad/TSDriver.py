@@ -2,7 +2,7 @@
 import struct
 import  time
 from threading import Thread
-from Queue import Queue
+from Queue import Queue, Empty
 
 tsdevice = "/dev/input/event1"
 format = "iihhi"
@@ -27,7 +27,7 @@ class TSDriver:
 	while (1):
 	    try:
 		self.processTsEvent( self.tsq.get( True, waitDuration))
-	    except:
+	    except Empty:
 		# we have a break in the stream, time to summarise
 		if ((len(self.xs) > 0) and len(self.ys)>0):
 		

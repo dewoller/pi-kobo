@@ -6,7 +6,7 @@ import  os
 import  time
 from subprocess import call
 import thread
-from Queue import Queue
+from Queue import Queue, Empty
 from MQTT import MQTT
 import threading
 
@@ -167,7 +167,10 @@ def setupKeypad( screen, font):
     py=0
     for i in keys:
         l= font.render(i, 0, BLACK)
-        lw= font.render(i, 0, (100,100,100))
+        if (i=="B"):
+	    pass
+        elif (i=="G"):
+	    pass
 
         lr=l.get_rect()
         lrx = px*w + 50 
@@ -178,7 +181,7 @@ def setupKeypad( screen, font):
 
 
         # labels in the (0)form index, (1)rendered font, (2)enclosing rectangle, and (3)xy coord pair
-        labels.append([i,l,lr, (lrx,lry), lw])
+        labels.append([i,l,lr, (lrx,lry)])
         rects.append(lr)
         
         px +=1
@@ -249,9 +252,9 @@ def processKeypad():
 	try:
 	    event = eventQueue.get(True, 20 ) 
 	    print event
-	except Exception as e:
-	    print "error, maybe timeout %s" % e
-	    next
+	except Empty:
+	    continue
+
 	if ((event[0] == TOUCHDOWN) | (event[0] == TOUCHUP)  ):
 
 	    touch_rect.center = event[1:3]

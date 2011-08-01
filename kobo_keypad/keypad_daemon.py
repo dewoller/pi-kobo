@@ -1,3 +1,4 @@
+#!/usr/bin/python
 import daemon
 import logging
 import keypad
