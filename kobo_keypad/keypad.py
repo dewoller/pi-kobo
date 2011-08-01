@@ -9,6 +9,9 @@ import thread
 from Queue import Queue, Empty
 from MQTT import MQTT
 import threading
+import logging
+
+logger = logging.getLogger("Keypad main")
 
 import TSDriver
 
@@ -128,7 +131,8 @@ def buffer( mqtt, buff, ch ):
 	    buff=""
     else:
         buff += ch
-    print "Buff=", buff
+
+    logger.debug( "Buffer=%s"%( buff))
     return buff
 
 
@@ -142,7 +146,7 @@ def get_touch_input(eventQueue):
         
         
 def keyUpEvent(q, x,y):
-    print "Key Up Event %s %s " % (x,y)
+    logger.debug( "Key Up Event %s %s " % (x,y))
     q.put([TOUCHUP, x, y])
         
 def flash_screen(screen, font, labels, buff):
@@ -251,7 +255,7 @@ def processKeypad():
     while 1:
 	try:
 	    event = eventQueue.get(True, 20 ) 
-	    print event
+	    logger.debug( "Event = " , event)
 	except Empty:
 	    continue
 
@@ -262,7 +266,7 @@ def processKeypad():
 	    if (which>=0):
 		# we have a valid touch event
 		if  (event[0] == TOUCHDOWN):
-		    print "touch event"
+		    logger.debug( "Touchdown Event")
 		    pygame.draw.rect(screen, BLACK, labels[which][2])
 		    eventQueue.put([TOUCHUP, event[1], event[2]])
 		    #threading.Timer(keyDownDuration, keyUpEvent, (eventQueue, event[1], event[2])).start()
@@ -270,7 +274,7 @@ def processKeypad():
 		else:
 		    ch  = labels[which][0]
 		    buff= buffer(mqtt, buff, ch)
-		    print ch
+		    logger.debug( "touch up event %s" % (ch))
 		    displayBufferOnScreen(screen, font, buff)
 		    pygame.draw.rect(screen, WHITE, labels[which][2]) # white rectangle
 		    screen.blit(labels[which][1], labels[which][3])  # print the black key

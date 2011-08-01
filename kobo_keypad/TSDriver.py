@@ -3,6 +3,7 @@ import struct
 import  time
 from threading import Thread
 from Queue import Queue, Empty
+import logging
 
 tsdevice = "/dev/input/event1"
 format = "iihhi"
@@ -11,6 +12,7 @@ format = "iihhi"
 class TSDriver:
 
     def __init__(self, outQ):
+	self.logger =logging.getLogger('Touch screen driver')
 	self.xs=[]
 	self.ys=[]
 	self.touchscreen = open(tsdevice,"rb")
