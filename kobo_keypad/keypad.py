@@ -8,7 +8,7 @@ from pygame.locals import *
 import struct
 import  os
 import  time
-from subprocess import call
+import subprocess
 import thread
 from Queue import Queue, Empty
 import threading
@@ -148,16 +148,14 @@ def keyUpEvent(q, x,y):
         
 def clear_screen(screen):
     screen.fill( const.COLOR_BLACK )
-    pygame.display.update()
-    call(["/kobo_keypad/full_updatescreen"])
+    updateScreen( screen )
     time.sleep(0.2)
 
 def flash_screen(screen, font, labels, buff):
     clear_screen(screen )
     drawBaseScreen( screen, labels )
     displayBufferOnScreen( screen, font, buff)
-    pygame.display.update()
-    call(["/kobo_keypad/full_updatescreen"])
+    updateScreen( screen )
        
 
 
@@ -197,7 +195,7 @@ def setupKeypad( screen, font):
             px=0
             py+=1
     drawBaseScreen( screen, labels )
-    if (onKobo):  call(["/kobo_keypad/full_monochrome"])
+    updateScreen(screen)
     return(rects, labels)
 
 def drawBaseScreen( screen, labels):
@@ -209,7 +207,15 @@ def drawBaseScreen( screen, labels):
 
         # draw the enclosing rectangle, in black
         pygame.draw.rect(screen, const.COLOR_BLACK, labels[i][2], 2)
+
+def updateScreen( screen ):
     pygame.display.update()
+    filename=os.tempnam("/tmp","kobo") + ".png"
+    pygame.image.save(pygame.transform.rotate(screen,90),filename)
+    #subprocess.call(["/kobo_keypad/rpng-kobo", filename, "{:d}".format(x), "{:d}".format(y)])
+    subprocess.call(["/kobo_keypad/rpng-kobo", filename])
+    os.unlink(filename)
+
 
 def clearBufferOnScreen(screen, font, buff):
     pygame.draw.rect(screen, const.COLOR_BLACK, pygame.rect.Rect(0,0,800,100))
@@ -223,6 +229,9 @@ def displayBufferOnScreen(screen, font, buff):
     pygame.draw.rect(screen, color, pygame.rect.Rect(0,0,800,100))
     screen.blit(font.render(buff, 0, (0,0,0)), (10,10))
 
+################################## ################################## ##################################
+################################## ################################## ##################################
+################################## ################################## ##################################
 from signal import alarm, signal, SIGALRM, SIGKILL
 
 def init_Pygame():
@@ -264,8 +273,8 @@ def processKeypad():
 
     screen.blit( render_textrect( "Wait for Pi", font, msg_rect, const.COLOR_BLACK, const.COLOR_WHITE), msg_rect)
     eventQueue.put([const.EVENT_CLEARMSG])
-    pygame.display.update()
-    call(["/kobo_keypad/full_monochrome"])
+    updateScreen( screen )
+    
 
     mqtt = MQTT("192.168.2.1", eventQueue, "keypad", "keypad", "dispatcher")
 
@@ -291,7 +300,6 @@ def processKeypad():
 		    logger.debug( "Touchdown Event")
 		    pygame.draw.rect(screen, const.COLOR_BLACK, labels[which][2])
 		    eventQueue.put([const.EVENT_TOUCHUP, event[1], event[2]])
-		    #threading.Timer(keyDownDuration, keyUpEvent, (eventQueue, event[1], event[2])).start()
 		    toUpdate=True
 		else:
 		    ch  = labels[which][0]
@@ -317,8 +325,7 @@ def processKeypad():
 	    toUpdate=True
 
 	if (toUpdate):
-	    pygame.display.update()
-	    if (onKobo):  call(["/kobo_keypad/full_monochrome"])
+	    updateScreen( screen )
 	    toUpdate=False
 	    
 	    
