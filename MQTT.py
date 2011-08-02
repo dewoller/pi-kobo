@@ -37,8 +37,8 @@ class MQTT:
 		self.logger.info("Disconnection unexpected")
 		self.connect()
 
-	def on_publish(val):
-		self.logger.info( "completed publish %s " %( val))
+	def on_publish(obj, userdata, msg):
+		self.logger.info( "completed publish %s " %( msg))
 
 	self.socketError = False 
         retry=True

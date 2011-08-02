@@ -139,7 +139,7 @@ def get_touch_input(eventQueue):
     t=TSDriver.TSDriver(processedQueue)
     while(1):
 	(x,y) = processedQueue.get()
-	eventQueue.put([const.EVENT_TOUCH, x, y])
+	eventQueue.put([const.EVENT_TOUCHDOWN, x, y])
         
         
 def keyUpEvent(q, x,y):
@@ -242,7 +242,7 @@ def processKeypad():
 
     eventQueue= Queue();
     thread.start_new_thread(get_touch_input, (eventQueue, ))
-    mqtt = MQTT(eventQueue)
+    mqtt = MQTT(eventQueue, "pi", "pi", "dispatcher")
     buff=""
 
     touch_rect = pygame.rect.Rect(0,0, 5, 5)
