@@ -13,6 +13,7 @@ class MQTT:
         self.outQ = outQ
         self.client = mosquitto.Mosquitto("kobo")
         self.connect()
+        self.socketError = False
 
         self.t = Thread(target=self.loop)
         self.t.daemon = True
@@ -29,7 +30,7 @@ class MQTT:
 		self.logger.info("Disconnection unexpected")
 		self.connect()
 
-    
+	self.socketError = False 
         retry=True
         while ( retry ):
 	    self.logger.info("initial connect")
@@ -54,11 +55,14 @@ class MQTT:
 	except socket_error:
             self.outQ.put([5,"socket error"])
 	    self.logger.info("socket error" )
+	    self.socketError = True
 	    
 
 
     def loop( self ):
         while True:
+	    if self.socketError:
+		self.connect()	
             self.client.loop()
             time.sleep(2)
 
