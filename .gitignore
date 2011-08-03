@@ -1,4 +1,5 @@
 *.pyc
 *.java
-*.swp
-
+.*.swp
+.*.swo
+.*.un~

@@ -10,6 +10,7 @@ import logging
 logger = logging.getLogger()
 import const
 from MQTT import MQTT
+import bluescan
 
 class switch(object):
     def __init__(self, value):
@@ -32,7 +33,7 @@ class switch(object):
             return False
 
 
-def process( pins, mqtt, payload ):
+def processKeyCodes( pins, mqtt, payload ):
     logger.info("processing payload %s" % payload)
     #pdb.set_trace()
     if payload == "119":
@@ -57,13 +58,27 @@ def process( pins, mqtt, payload ):
 def startDispatcher():
 	q = Queue()
 	mqtt = MQTT( q, "dispatcher", "dispatcher", "keypad" )
+	bs1 = bluescan.bluescan(q, ["98:D6:F7:B7:A5:DA"])
 	pins =Pins()
+	ignoreBlueEvent=True
 
 	while True:
 	    try:
 		payload = q.get(True, 20)
 		if payload[0] == const.EVENT_KEYS:
-			process( pins, mqtt, payload[1] )
+			processKeyCodes( pins, mqtt, payload[1] )
+		elif (payload[0] == const.EVENT_BLUEDEVICETOGGLE):
+		    ignoreBlueEvent= not ignoreBlueEvent
+		    if ignoreBlueEvent :
+			logger.debug( "Ignoring Bluetooth unlock events" )
+		    else:
+			logger.debug( "Paying attention to Bluetooth unlock events" )
+
+		elif (payload[0] == const.EVENT_BLUEDEVICE) & (not ignoreBlueEvent):
+		    pins.unlock(50)
+		    mqtt.publish([const.EVENT_FLASHMSG, "blue tooth door unlock"] )
+
+		
 		q.task_done()
 	    except Empty as e:
 		    pass

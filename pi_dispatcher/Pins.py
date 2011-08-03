@@ -9,7 +9,7 @@ wateringPins=(7,11,15,12)
 lockPinIndex=3;
 sht1x_dataPin = 22
 sht1x_clkPin = 18
-
+latestOffTime=dict()
 
 try:
     import RPi.GPIO as GPIO
@@ -28,29 +28,35 @@ class Pins:
 	self.logger = logging.getLogger()
 
     def GPIO_output( self, pin, what):
-        self.logger.info( "setting pin ", pin, " to state ", what, "at time ", time.time())
-        if (onPi):
-            GPIO.output(pin, what)
+        self.logger.info( "setting pin {} to state {} ".format( pin, what))
+	GPIO.output(pin, what)
 
     def enablePin( self, n, duration=8):
-        self.GPIO_output(wateringPins[n], P.ON)
-        Timer(duration, self.disablePin, [n]).start()
+	wateringPin = wateringPins[n]
+        self.GPIO_output(wateringPin, P.ON)
+        Timer(duration, self.disablePin, [ wateringPin ]).start()
+        latestOffTime[ wateringPin ] = max( latestOffTime[ wateringPin ], time.time() + duration)
 
 
-    def disablePin(self, n):
-        self.GPIO_output(wateringPins[n], P.OFF)
+    def disablePin(self,  wateringPin):
+        self.logger.debug( "latestoff {} compared to time {} , pin {}".format( latestOffTime[ wateringPin ],time.time(), wateringPin))
+
+	if latestOffTime[ wateringPin ]-1 <= time.time():
+	    self.GPIO_output(wateringPin, P.OFF)
 
     def disableAllPins(self ):
 	for wateringPin in wateringPins:
+	    latestOffTime[ wateringPin ] = -1
 	    GPIO.output(wateringPin, P.OFF)
 
 
     def water(self, n, duration=120):
         if (n<4):
+	    # because pins number from 1-3, and the fourth pin is for the lock mechanism
             self.enablePin(n-1, duration)
 
-    def unlock(self):
-        self.enablePin(lockPinIndex, 8)
+    def unlock(self, nseconds=8):
+        self.enablePin(lockPinIndex, nseconds)
 
     def readTemperature( self ):
         return readTemp()
@@ -75,5 +81,7 @@ GPIO.setmode(GPIO.BOARD)
 for wateringPin in wateringPins:
     GPIO.setup(wateringPin, GPIO.OUT)
     GPIO.output(wateringPin, P.OFF)
+    latestOffTime[ wateringPin ] = -1
+
 #print readTemp()
      

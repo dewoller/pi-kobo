@@ -37,7 +37,7 @@ class MQTT:
 		self.connect()
 
 	def on_publish(obj, userdata, msg):
-		self.logger.info( "completed publish %s " %( msg))
+		self.logger.debug( "completed publish %s " %( msg))
 
 	self.socketError = False 
         retry=True
