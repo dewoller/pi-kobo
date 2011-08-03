@@ -172,10 +172,13 @@ def setupKeypad( screen, font):
     for i in keys:
         if (i=="B"):
 	    l=pygame.image.load("/kobo_keypad/bs.png")
+	    offset=0
         elif (i=="G"):
 	    l=pygame.image.load("/kobo_keypad/return.png")
+	    offset=0
         else:
 	    l= font.render(i, 0, const.COLOR_BLACK)
+	    offset=20
 
         lr=l.get_rect()
         lrx = px*w + 50 
@@ -186,7 +189,7 @@ def setupKeypad( screen, font):
 
 
         # labels in the (0)form index, (1)rendered font, (2)enclosing rectangle, and (3)xy coord pair
-        labels.append([i,l,lr, (lrx,lry)])
+        labels.append([i,l,lr, (lrx+offset,lry)])
         rects.append(lr)
         
         px +=1
