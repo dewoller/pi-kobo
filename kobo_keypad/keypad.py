@@ -146,11 +146,14 @@ def keyUpEvent(q, x,y):
     logger.debug( "Key Up Event %s %s " % (x,y))
     q.put([const.EVENT_TOUCHUP, x, y])
         
-def flash_screen(screen, font, labels, buff):
+def clear_screen(screen):
     screen.fill( const.COLOR_BLACK )
     pygame.display.update()
     call(["/kobo_keypad/full_updatescreen"])
     time.sleep(0.2)
+
+def flash_screen(screen, font, labels, buff):
+    clear_screen(screen )
     drawBaseScreen( screen, labels )
     displayBufferOnScreen( screen, font, buff)
     pygame.display.update()
@@ -236,13 +239,14 @@ def init_Pygame():
 def processKeypad():
     #import pdb; pdb.set_trace()
     screen = init_Pygame()
+    clear_screen( screen )
     pygame.mouse.set_visible(False)
     font = pygame.font.Font("/kobo_keypad/Cabin-Regular.otf", 90)
     (rects, labels)= setupKeypad(screen, font)
 
     eventQueue= Queue();
     thread.start_new_thread(get_touch_input, (eventQueue, ))
-    mqtt = MQTT(eventQueue, "pi", "pi", "dispatcher")
+    mqtt = MQTT(eventQueue, "keypad", "keypad", "dispatcher")
     buff=""
 
     touch_rect = pygame.rect.Rect(0,0, 5, 5)
@@ -278,13 +282,17 @@ def processKeypad():
 		    screen.blit(labels[which][1], labels[which][3])  # print the black key
 		    pygame.draw.rect(screen, const.COLOR_BLACK, labels[which][2], 2) # black rectangle
 		    toUpdate=True
-	elif (event[0]==FLASHSCREEN):
+	elif (event[0]==const.EVENT_FLASHSCREEN):
 	    flash_screen( screen, font, labels, buff)
-	elif (event[0]==FLASHMSG):
-	    screen.blit( render_textrect( event[1], font, msg_rect, const.COLOR_BLACK, const.COLOR_WHITE), msg_rect)
-	    eventQueue.put([CLEARMSG])
+	elif (event[0]==const.EVENT_FLASHMSG):
+	    try:
+		screen.blit( render_textrect( event[1], font, msg_rect, const.COLOR_BLACK, const.COLOR_WHITE), msg_rect)
+	    except TextRectException:
+		flash_screen( screen, font, labels, buff)
+		screen.blit( render_textrect( "*** msg too big", font, msg_rect, const.COLOR_BLACK, const.COLOR_WHITE), msg_rect)
+	    eventQueue.put([const.EVENT_CLEARMSG])
 	    toUpdate=True
-	elif (event[0]==CLEARMSG):
+	elif (event[0]==const.EVENT_CLEARMSG):
 	    pygame.draw.rect(screen, const.COLOR_WHITE, msg_rect)
 	    toUpdate=True
 
