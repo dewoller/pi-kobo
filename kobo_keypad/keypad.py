@@ -211,8 +211,16 @@ def drawBaseScreen( screen, labels):
         pygame.draw.rect(screen, const.COLOR_BLACK, labels[i][2], 2)
     pygame.display.update()
 
+def clearBufferOnScreen(screen, font, buff):
+    pygame.draw.rect(screen, const.COLOR_BLACK, pygame.rect.Rect(0,0,800,100))
+
 def displayBufferOnScreen(screen, font, buff):
-    pygame.draw.rect(screen, const.COLOR_WHITE, pygame.rect.Rect(0,0,800,100))
+    if (buff==""):
+	color=const.COLOR_BLACK
+    else:
+	color=const.COLOR_WHITE
+	
+    pygame.draw.rect(screen, color, pygame.rect.Rect(0,0,800,100))
     screen.blit(font.render(buff, 0, (0,0,0)), (10,10))
 
 from signal import alarm, signal, SIGALRM, SIGKILL
@@ -249,7 +257,7 @@ def processKeypad():
 
     eventQueue= Queue();
     thread.start_new_thread(get_touch_input, (eventQueue, ))
-    mqtt = MQTT(eventQueue, "keypad", "keypad", "dispatcher")
+    mqtt = MQTT("192.168.2.1", eventQueue, "keypad", "keypad", "dispatcher")
     buff=""
 
     touch_rect = pygame.rect.Rect(0,0, 5, 5)
