@@ -19,8 +19,9 @@ class MQTT:
 	self.inTopic = inTopic
 	self.outTopic = outTopic
         self.client = mosquitto.Mosquitto(clientID)
-        self.connect()
         self.socketError = False
+        self.logger.debug("Socket Error Flag = %s" % (self.socketError))
+        self.connect()
 
         self.t = Thread(target=self.loop)
         self.t.daemon = True
@@ -38,15 +39,16 @@ class MQTT:
 		self.connect()
 
 	def on_publish(obj, userdata, msg):
-		self.logger.debug( "completed publish %s " %( msg))
+	    self.logger.debug( "completed publish %s " %( msg))
+	    self.logger.debug("Socket Error Flag = %s" % (self.socketError))
 
-	self.socketError = False 
         retry=True
         while ( retry ):
             try:
                 self.client.connect(self.serverIP)  # pi
                 self.client.subscribe(self.inTopic, 0)
 	        self.logger.info("Connecting, subscribing to topic %s" % (self.inTopic))
+		self.logger.debug("Socket Error Flag = %s" % (self.socketError))
                 self.client.on_message = on_message
                 self.client.on_disconnect = on_disconnect
 		self.client.on_publish = on_publish
@@ -54,24 +56,31 @@ class MQTT:
             except socket_error:
                 retry =  True
                 self.eventQueue.put([const.EVENT_FLASHMSG,"Retry MQTT connect"])
-                self.logger.info("retrying connect")
+                self.logger.info("Retrying MQTT connect")
                 time.sleep(5)
+
+	self.socketError = False 
                 
     def publish(self, msg):
 	self.logger.info("Publishing msg %s with topic %s" %  (msg, self.outTopic))
+	self.logger.debug("Socket Error Flag = %s" % (self.socketError))
         try:
 	    self.client.publish(self.outTopic,string.join(msg, "|"), 2)
 	except socket_error:
             self.eventQueue.put([const.EVENT_FLASHMSG,"socket error"])
-	    self.logger.info("socket error" )
 	    self.socketError = True
+	    self.logger.info("Socket error when trying to publish %s" % (msg) )
+	    self.logger.debug("Socket Error Flag = %s" % (self.socketError))
+
 	    
 
 
     def loop( self ):
         while True:
 	    if self.socketError:
+		self.logger.debug("Socket Error Flag = %s in Loop" % (self.socketError))
 		self.connect()	
+		
             self.client.loop()
             time.sleep(2)
 

@@ -9,12 +9,12 @@ import keypad
 
 logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
-fh = logging.FileHandler("/tmp/keypadLog.txt")
+fh = logging.FileHandler("/mnt/onboard/keypadLog.txt")
 formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 fh.setFormatter(formatter)
 logger.addHandler(fh)
 
-daemonLogFile = open('/tmp/keypadLogConsole.txt', 'w')
+daemonLogFile = open('/mnt/onboard/keypadLogConsole.txt', 'w')
 context = daemon.DaemonContext(
    files_preserve = [
       fh.stream,

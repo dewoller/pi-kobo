@@ -249,6 +249,10 @@ def init_Pygame():
 
 def processKeypad():
     #import pdb; pdb.set_trace()
+
+    touch_rect = pygame.rect.Rect(0,0, 5, 5)
+    msg_rect = pygame.rect.Rect(400,100,400,500)
+
     screen = init_Pygame()
     clear_screen( screen )
     pygame.mouse.set_visible(False)
@@ -257,11 +261,16 @@ def processKeypad():
 
     eventQueue= Queue();
     thread.start_new_thread(get_touch_input, (eventQueue, ))
+
+    screen.blit( render_textrect( "Wait for Pi", font, msg_rect, const.COLOR_BLACK, const.COLOR_WHITE), msg_rect)
+    eventQueue.put([const.EVENT_CLEARMSG])
+    pygame.display.update()
+    call(["/kobo_keypad/full_monochrome"])
+
     mqtt = MQTT("192.168.2.1", eventQueue, "keypad", "keypad", "dispatcher")
+
     buff=""
 
-    touch_rect = pygame.rect.Rect(0,0, 5, 5)
-    msg_rect = pygame.rect.Rect(400,100,400,500)
 
     keyDownDuration=.01
     toUpdate=False
