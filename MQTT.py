@@ -14,15 +14,16 @@ class MQTT:
         self.client = mosquitto.Mosquitto("pi")
         self.client.connect("127.0.0.1")
         #client.connect("192.168.1.31")
-        inTopic="keypad"
+        inTopic="dispatcher"
+        self.outTopic="keypad"
         self.client.subscribe(inTopic, 0)
         self.client.on_message = on_message
         self.t = Thread(target=self.loop)
         self.t.daemon = True
         self.t.start()
 
-    def publish(self, topic, msg):
-        self.client.publish(topic,msg)
+    def publish(self, msg):
+        self.client.publish(self.outTopic,msg)
 
 
     def loop( self ):

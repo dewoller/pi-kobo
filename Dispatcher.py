@@ -33,12 +33,15 @@ def process( payload ):
     #pdb.set_trace()
     if payload == "119":
         p.unlock()
+        m.publish("flash|Door Unlocked")
     elif payload == "666":
         p.disableAllPins()
+        m.publish("flash|All Pins Disabled")
     elif payload[0:3] == "999":
         pin = int(payload[3:4])
         duration = int(payload[4:])
         p.water(pin, duration)
+        m.publish("flash|Watering zone %s for %s seconds" % (pin, duration))
     else:
         print "Huh?"
 
