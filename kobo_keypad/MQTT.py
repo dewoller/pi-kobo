@@ -13,8 +13,8 @@ class MQTT:
 
         self.outQ = outQ
         self.client = mosquitto.Mosquitto("kobo")
-        #self.client.connect("192.168.2.1")
-        self.client.connect("localhost")
+        self.client.connect("192.168.2.1")
+        #self.client.connect("localhost")
         inTopic="keypad"
         self.outTopic="dispatcher"
         self.client.subscribe(inTopic, 0)
