@@ -29,7 +29,7 @@ class TSDriver:
 		self.processTsEvent( self.tsq.get( True, waitDuration))
 	    except:
 		# we have a break in the stream, time to summarise
-		if (len(self.xs) > 0):
+		if ((len(self.xs) > 0) and len(self.ys)>0):
 		
 		    x=sum(self.xs) / len(self.xs)
 		    y=sum(self.ys) / len(self.ys)

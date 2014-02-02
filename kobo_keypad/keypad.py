@@ -118,17 +118,18 @@ def render_textrect(string, font, rect, text_color, background_color, justificat
     return surface
 
 
-def buffer( ch ):
-    global buff,  mqtt 
+def buffer( mqtt, buff, ch ):
     if (ch=="B"): 
         if(len(buff) > 0):
             buff=buff[:-1]
-    elif (ch=="G"):
-        mqtt.publish(buff )
-        buff=""
+    elif ((ch=="G")  ):
+        if (buff != ""):
+	    mqtt.publish(buff )
+	    buff=""
     else:
         buff += ch
     print "Buff=", buff
+    return buff
 
 
         
@@ -147,18 +148,19 @@ def keyUpEvent(q, x,y):
 def flash_screen(screen, font, labels, buff):
     screen.fill( BLACK )
     pygame.display.update()
-    call(["./full_updatescreen"])
+    call(["/kobo_keypad/full_updatescreen"])
     time.sleep(0.2)
     drawBaseScreen( screen, labels )
-    updateBuff( screen, font, buff)
+    displayBufferOnScreen( screen, font, buff)
     pygame.display.update()
-    call(["./full_updatescreen"])
+    call(["/kobo_keypad/full_updatescreen"])
        
 
 
 def setupKeypad( screen, font):
     # setup screen and keypad;  return keyboard data 
-
+    w = 350/3 
+    h = 120
     labels=[]
     rects=[]
     px=0
@@ -168,11 +170,11 @@ def setupKeypad( screen, font):
         lw= font.render(i, 0, (100,100,100))
 
         lr=l.get_rect()
-        lrx = px*150+75
-        lry= py*120+120
+        lrx = px*w + 50 
+        lry= py*h + 120
         
-        lr.center=(lrx+75,lry+60)
-        lr.union_ip( Rect(lrx, lry, 150,120) )
+        lr.center=(lrx+w/2,lry+h/2)
+        lr.union_ip( Rect(lrx, lry, w,h ) )
 
 
         # labels in the (0)form index, (1)rendered font, (2)enclosing rectangle, and (3)xy coord pair
@@ -184,7 +186,7 @@ def setupKeypad( screen, font):
             px=0
             py+=1
     drawBaseScreen( screen, labels )
-    if (onKobo):  call(["./full_monochrome"])
+    if (onKobo):  call(["/kobo_keypad/full_monochrome"])
     return(rects, labels)
 
 def drawBaseScreen( screen, labels):
@@ -198,72 +200,99 @@ def drawBaseScreen( screen, labels):
         pygame.draw.rect(screen, BLACK, labels[i][2], 2)
     pygame.display.update()
 
-def updateBuff(screen, font, buff):
+def displayBufferOnScreen(screen, font, buff):
     pygame.draw.rect(screen, WHITE, pygame.rect.Rect(0,0,800,100))
     screen.blit(font.render(buff, 0, (0,0,0)), (10,10))
 
-################################## ################################## ##################################
-################################## ################################## ##################################
-################################## ################################## ##################################
+from signal import alarm, signal, SIGALRM, SIGKILL
 
-pygame.init()
-#import pdb; pdb.set_trace()
-screen = pygame.display.set_mode((800, 600), pygame.FULLSCREEN)
-pygame.mouse.set_visible(False)
-font = pygame.font.Font("Cabin-Regular.otf", 90)
-(rects, labels)= setupKeypad(screen, font)
+def init_Pygame():
 
-eventQueue= Queue();
-thread.start_new_thread(get_touch_input, (eventQueue, ))
-mqtt = MQTT(eventQueue)
-
-touch_rect = pygame.rect.Rect(0,0, 5, 5)
-msg_rect = pygame.rect.Rect(600,100,200,500)
-
-keyDownDuration=.01
-toUpdate=False
-while 1:
+    # this section is an unbelievable nasty hack - for some reason Pygame
+    # needs a keyboardinterrupt to initialise in some limited circs (second time running)
+    class Alarm(Exception):
+        pass
+    def alarm_handler(signum, frame):
+        raise Alarm
+    signal(SIGALRM, alarm_handler)
+    alarm(3)
+    screen=0
     try:
-        event = eventQueue.get(True, 20 ) 
-        print event
-    except Exception as e:
+	pygame.init()
+	screen = pygame.display.set_mode((800, 600), pygame.FULLSCREEN)
+        alarm(0)
+    except Alarm:
+        raise KeyboardInterrupt
+    return screen
+################################## ################################## ##################################
+################################## ################################## ##################################
+################################## ################################## ##################################
+
+def processKeypad():
+    #import pdb; pdb.set_trace()
+    screen = init_Pygame()
+    pygame.mouse.set_visible(False)
+    font = pygame.font.Font("/kobo_keypad/Cabin-Regular.otf", 90)
+    (rects, labels)= setupKeypad(screen, font)
+
+    eventQueue= Queue();
+    thread.start_new_thread(get_touch_input, (eventQueue, ))
+    mqtt = MQTT(eventQueue)
+    buff=""
+
+    touch_rect = pygame.rect.Rect(0,0, 5, 5)
+    msg_rect = pygame.rect.Rect(400,100,400,500)
+
+    keyDownDuration=.01
+    toUpdate=False
+    while 1:
+	try:
+	    event = eventQueue.get(True, 20 ) 
+	    print event
+	except Exception as e:
 	    print "error, maybe timeout %s" % e
-    if ((event[0] == TOUCHDOWN) | (event[0] == TOUCHUP)  ):
+	    next
+	if ((event[0] == TOUCHDOWN) | (event[0] == TOUCHUP)  ):
 
-	touch_rect.center = event[1:3]
-	which=touch_rect.collidelist(rects)
-	if (which>=0):
-	    # we have a valid touch event
-	    if  (event[0] == TOUCHDOWN):
-	        print "touch event"
-		pygame.draw.rect(screen, BLACK, labels[which][2])
-		threading.Timer(keyDownDuration, keyUpEvent, (eventQueue, event[1], event[2])).start()
-		toUpdate=True
-	    else:
-		ch  = labels[which][0]
-		buffer(ch)
-		print ch
-		updateBuff(screen, font, buff)
-		pygame.draw.rect(screen, WHITE, labels[which][2]) # white rectangle
-		screen.blit(labels[which][1], labels[which][3])  # print the black key
-		pygame.draw.rect(screen, BLACK, labels[which][2], 2) # black rectangle
-		toUpdate=True
-    elif (event[0]==FLASHSCREEN):
-	flash_screen( screen, font, labels, buff)
-    elif (event[0]==FLASHMSG):
-        screen.blit( render_textrect( event[1], font, msg_rect, BLACK, WHITE), msg_rect)
-	toUpdate=True
-    elif (event[0]==CLEARMSG):
-	pygame.draw.rect(screen, WHITE, msg_rect)
-	toUpdate=True
+	    touch_rect.center = event[1:3]
+	    which=touch_rect.collidelist(rects)
+	    if (which>=0):
+		# we have a valid touch event
+		if  (event[0] == TOUCHDOWN):
+		    print "touch event"
+		    pygame.draw.rect(screen, BLACK, labels[which][2])
+		    eventQueue.put([TOUCHUP, event[1], event[2]])
+		    #threading.Timer(keyDownDuration, keyUpEvent, (eventQueue, event[1], event[2])).start()
+		    toUpdate=True
+		else:
+		    ch  = labels[which][0]
+		    buff= buffer(mqtt, buff, ch)
+		    print ch
+		    displayBufferOnScreen(screen, font, buff)
+		    pygame.draw.rect(screen, WHITE, labels[which][2]) # white rectangle
+		    screen.blit(labels[which][1], labels[which][3])  # print the black key
+		    pygame.draw.rect(screen, BLACK, labels[which][2], 2) # black rectangle
+		    toUpdate=True
+	elif (event[0]==FLASHSCREEN):
+	    flash_screen( screen, font, labels, buff)
+	elif (event[0]==FLASHMSG):
+	    screen.blit( render_textrect( event[1], font, msg_rect, BLACK, WHITE), msg_rect)
+	    eventQueue.put([CLEARMSG])
+	    toUpdate=True
+	elif (event[0]==CLEARMSG):
+	    pygame.draw.rect(screen, WHITE, msg_rect)
+	    toUpdate=True
 
-    if (toUpdate):
-	pygame.display.update()
-	if (onKobo):  call(["./full_monochrome"])
-	toUpdate=False
-        
-        
+	if (toUpdate):
+	    pygame.display.update()
+	    if (onKobo):  call(["/kobo_keypad/full_monochrome"])
+	    toUpdate=False
+	    
+	    
 
+    pygame.quit()
+    mosquittoClient.disconnect() 
+    sys.exit()
 
-mosquittoClient.disconnect() 
-
+if __name__ == "__main__":
+    processKeypad()
