@@ -1,47 +1,54 @@
 import time
 from Queue import Queue
 from threading import Timer
-onPi=False
+from functools import partial
+onPi=True
+controlPins=(7,11,15,12)
+lockPinIndex=3;
+
+if (onPi) :
+    try:
+	import RPi.GPIO as GPIO
+    except RuntimeError:
+	print("Error importing RPi.GPIO!  This is probably because you need superuser privileges.  You can achieve this by using 'sudo' to run your script")
+
+class P():
+	if onPi:
+	    OFF=GPIO.HIGH
+	    ON=GPIO.LOW
+	else:
+	    OFF="ON"
+	    ON="OFF"
+
+
+if (onPi) :
+    GPIO.setmode(GPIO.BOARD)
+    for controlPin in controlPins:
+        GPIO.setup(controlPin, GPIO.OUT)
+	GPIO.output(controlPin, P.OFF)
+
 
         
 class Pins:
-    class P():
-        if onPi:
-            OFF=GPIO.HIGH
-            ON=GPIO.LOW
-        else:
-            OFF="ON"
-            ON="OFF"
     def __init__(self):
         timerq = Queue()
 
-        self.controlPins=(5,9,13,10)
-        self.lockPinIndex=3;
-        if (onPi) :
-            try:
-                import RPi.GPIO as GPIO
-            except RuntimeError:
-                print("Error importing RPi.GPIO!  This is probably because you need superuser privileges.  You can achieve this by using 'sudo' to run your script")
-            GPIO.setmode(GPIO.BOARD)
-            map(GPIO.setup, self.controlPins, GPIO.OUT, initial=P.OFF)
-
-
     def GPIO_output( self, pin, what):
+        print "setting pin ", pin, " to state ", what, "at time ", time.time()
         if (onPi):
             GPIO.output(pin, what)
-        else:
-            print "setting pin ", pin, " to state ", what, "at time ", time.time()
 
     def enablePin( self, n, duration=8):
-        self.GPIO_output(self.controlPins[n], self.P.ON)
+        self.GPIO_output(controlPins[n], P.ON)
         Timer(duration, self.disablePin, [n]).start()
 
 
     def disablePin(self, n):
-        self.GPIO_output(self.controlPins[n], self.P.OFF)
+        self.GPIO_output(controlPins[n], P.OFF)
 
     def disableAllPins(self ):
-        map(self.GPIO_output, self.controlPins, self.P.OFF)
+	for controlPin in controlPins:
+	    GPIO.output(controlPin, P.OFF)
 
 
     def water(self, n, duration=120):
@@ -49,7 +56,7 @@ class Pins:
             self.enablePin(n-1, duration)
 
     def unlock(self):
-        self.enablePin(self.lockPinIndex, 8)
+        self.enablePin(lockPinIndex, 8)
 
 
 

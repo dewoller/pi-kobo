@@ -1,11 +1,14 @@
-import pdb 
-#pdb.set_trace()
+#!/usr/bin/python 
+
+#import pdb ;pdb.set_trace()
 from MQTT import MQTT
 from Pins import Pins
-from Queue import Queue
-
-
-
+from Queue import Queue, Empty
+TOUCHDOWN=1
+TOUCHUP=2
+FLASHSCREEN=3
+FLASHMSG=5
+CLEARMSG=6
 
 class switch(object):
     def __init__(self, value):
@@ -28,38 +31,41 @@ class switch(object):
             return False
 
 
-def process( payload ):
+def process( pins, mqtt, payload ):
     print("processing payload %s" % payload)
     #pdb.set_trace()
     if payload == "119":
-        p.unlock()
-        m.publish("flash|Door Unlocked")
+        pins.unlock()
+        mqtt.publish("%i|Door Unlocked" % (FLASHMSG))
     elif payload == "666":
-        p.disableAllPins()
-        m.publish("flash|All Pins Disabled")
+        pins.disableAllPins()
+        mqtt.publish("%i|All Pins off" % (FLASHMSG))
     elif payload[0:3] == "999":
         pin = int(payload[3:4])
         duration = int(payload[4:])
-        p.water(pin, duration)
-        m.publish("flash|Watering zone %s for %s seconds" % (pin, duration))
+        pins.water(pin, duration)
+        mqtt.publish("%i|Water zone #%s for  %s sec" % (FLASHMSG, pin, duration))
     else:
-        print "Huh?"
+        mqtt.publish("%i" % (FLASHSCREEN))
+        print "incomprehensible message"
 
 
+def startDispatcher():
+	q = Queue()
+	mqtt = MQTT( q )
+	pins =Pins()
 
-q = Queue()
-m = MQTT( q )
-p=Pins()
-
-while True:
-    try:
-        payload = q.get(True, 20)
-        process( payload )
-        q.task_done()
-    except Exception as e:
-            print e
+	while True:
+	    try:
+		payload = q.get(True, 20)
+		process( pins, mqtt, payload )
+		q.task_done()
+	    except Empty as e:
+		    pass
     
 
 
+if __name__ == "__main__":
+     startDispatcher()
 
 
