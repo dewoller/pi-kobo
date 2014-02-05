@@ -2,6 +2,10 @@ import time
 from Queue import Queue
 from threading import Timer
 from functools import partial
+import logging
+logger = logging.getLogger()
+
+
 onPi=True
 controlPins=(7,11,15,12)
 lockPinIndex=3;
@@ -10,7 +14,7 @@ if (onPi) :
     try:
 	import RPi.GPIO as GPIO
     except RuntimeError:
-	print("Error importing RPi.GPIO!  This is probably because you need superuser privileges.  You can achieve this by using 'sudo' to run your script")
+	logger.info("Error importing RPi.GPIO!  This is probably because you need superuser privileges.  You can achieve this by using 'sudo' to run your script")
 
 class P():
 	if onPi:
@@ -31,10 +35,10 @@ if (onPi) :
         
 class Pins:
     def __init__(self):
-        timerq = Queue()
+	self.logger = logging.getLogger()
 
     def GPIO_output( self, pin, what):
-        print "setting pin ", pin, " to state ", what, "at time ", time.time()
+        self.logger.info( "setting pin ", pin, " to state ", what, "at time ", time.time())
         if (onPi):
             GPIO.output(pin, what)
 

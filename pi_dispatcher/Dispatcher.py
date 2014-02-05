@@ -4,6 +4,9 @@
 from MQTT import MQTT
 from Pins import Pins
 from Queue import Queue, Empty
+import logging
+logger = logging.getLogger()
+
 TOUCHDOWN=1
 TOUCHUP=2
 FLASHSCREEN=3
@@ -32,7 +35,7 @@ class switch(object):
 
 
 def process( pins, mqtt, payload ):
-    print("processing payload %s" % payload)
+    logger.info("processing payload %s" % payload)
     #pdb.set_trace()
     if payload == "119":
         pins.unlock()
@@ -47,7 +50,7 @@ def process( pins, mqtt, payload ):
         mqtt.publish("%i|Water zone #%s for  %s sec" % (FLASHMSG, pin, duration))
     else:
         mqtt.publish("%i" % (FLASHSCREEN))
-        print "incomprehensible message"
+        logger.info( "incomprehensible message %s " %(payload))
 
 
 def startDispatcher():

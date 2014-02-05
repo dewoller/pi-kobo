@@ -1,10 +1,11 @@
+#!/usr/bin/python
 import daemon
 import logging
 import Dispatcher
 
 logger = logging.getLogger()
 logger.setLevel(logging.DEBUG)
-fh = logging.FileHandler("./foo.log")
+fh = logging.FileHandler("/var/log/dispatcher.log")
 logger.addHandler(fh)
 
 daemonLogFile = open('/tmp/dispatcherLog.txt', 'w')
