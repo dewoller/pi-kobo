@@ -1,17 +1,15 @@
 #!/usr/bin/python 
+if __name__ == '__main__' and __package__ is None:
+    from os import sys, path
+    sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
 
 #import pdb ;pdb.set_trace()
-from MQTT import MQTT
 from Pins import Pins
 from Queue import Queue, Empty
 import logging
 logger = logging.getLogger()
-
-TOUCHDOWN=1
-TOUCHUP=2
-FLASHSCREEN=3
-FLASHMSG=5
-CLEARMSG=6
+import const
+from MQTT import MQTT
 
 class switch(object):
     def __init__(self, value):
@@ -39,29 +37,30 @@ def process( pins, mqtt, payload ):
     #pdb.set_trace()
     if payload == "119":
         pins.unlock()
-        mqtt.publish("%i|Door Unlocked" % (FLASHMSG))
+        mqtt.publish([const.EVENT_FLASHMSG, "Door Unlocked"] )
     elif payload == "666":
         pins.disableAllPins()
-        mqtt.publish("%i|All Pins off" % (FLASHMSG))
+        mqtt.publish([const.EVENT_FLASHMSG, "All Pins Off"] )
     elif payload[0:3] == "999":
         pin = int(payload[3:4])
         duration = int(payload[4:])
         pins.water(pin, duration)
-        mqtt.publish("%i|Water zone #%s for  %s sec" % (FLASHMSG, pin, duration))
+        mqtt.publish([const.EVENT_FLASHMSG, "Water zone #%s for  %s sec" % (pin, duration)])
     else:
-        mqtt.publish("%i" % (FLASHSCREEN))
+        mqtt.publish([const.EVENT_FLASHSCREEN, "Door Unlocked"] )
         logger.info( "incomprehensible message %s " %(payload))
 
 
 def startDispatcher():
 	q = Queue()
-	mqtt = MQTT( q )
+	mqtt = MQTT( q, "dispatcher", "dispatcher", "keypad" )
 	pins =Pins()
 
 	while True:
 	    try:
 		payload = q.get(True, 20)
-		process( pins, mqtt, payload )
+		if payload[0] == const.EVENT_KEYS:
+			process( pins, mqtt, payload[1] )
 		q.task_done()
 	    except Empty as e:
 		    pass
