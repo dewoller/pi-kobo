@@ -29,7 +29,6 @@ class MQTT:
 	def on_message(obj, userdata, msg):
 	    self.logger.info("Message received on topic "+msg.topic+" with QoS "+str(msg.qos)+" and payload "+msg.payload)
             event = string.split(msg.payload, "|")
-	    event[0]=int(event[0])
 	    self.eventQueue.put(event);
 	    
 	def on_disconnect(mosq, obj, rc):
