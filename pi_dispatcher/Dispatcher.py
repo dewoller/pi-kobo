@@ -6,6 +6,7 @@ if __name__ == '__main__' and __package__ is None:
 #import pdb ;pdb.set_trace()
 from Pins import Pins
 from Queue import Queue, Empty
+from subprocess import call
 import logging
 logger = logging.getLogger()
 import const
@@ -54,35 +55,40 @@ def processKeyCodes( pins, mqtt, payload ):
         mqtt.publish([const.EVENT_FLASHSCREEN, "Door Unlocked"] )
         logger.info( "incomprehensible message %s " %(payload))
 
+def dispatcherLoop( q, mqtt, pins ):
+    ignoreBlueEvent=True
+    while True:
+	try:
+	    payload = q.get(True, 20)
+	    if payload[0] == const.EVENT_KEYS:
+		    processKeyCodes( pins, mqtt, payload[1] )
+	    elif (payload[0] == const.EVENT_BLUEDEVICETOGGLE):
+		ignoreBlueEvent= not ignoreBlueEvent
+		if ignoreBlueEvent :
+		    logger.debug( "Ignoring Bluetooth unlock events" )
+		else:
+		    logger.debug( "Paying attention to Bluetooth unlock events" )
+
+	    elif (payload[0] == const.EVENT_BLUEDEVICE) & (not ignoreBlueEvent):
+		pins.unlock(50)
+		mqtt.publish([const.EVENT_FLASHMSG, "blue tooth door unlock"] )
+	    q.task_done()
+	except Empty as e:
+		pass
 
 def startDispatcher():
+    try:
 	q = Queue()
-	mqtt = MQTT( q, "127.0.0.1", "dispatcher", "dispatcher", "keypad" )
+	mqtt = MQTT(  "127.0.0.1", q, "dispatcher", "dispatcher", "keypad" )
 	bs1 = bluescan.bluescan(q, ["98:D6:F7:B7:A5:DA"])
 	pins =Pins()
-	ignoreBlueEvent=True
+	dispatcherLoop( q, mqtt, pins)
+    except Exception as inst:
+	logger.info(type(inst))
+	logger.info(inst)
+	logger.exception(inst)
+        call(["sudo", "/usr/bin/allPinsOff"])
 
-	while True:
-	    try:
-		payload = q.get(True, 20)
-		if payload[0] == const.EVENT_KEYS:
-			processKeyCodes( pins, mqtt, payload[1] )
-		elif (payload[0] == const.EVENT_BLUEDEVICETOGGLE):
-		    ignoreBlueEvent= not ignoreBlueEvent
-		    if ignoreBlueEvent :
-			logger.debug( "Ignoring Bluetooth unlock events" )
-		    else:
-			logger.debug( "Paying attention to Bluetooth unlock events" )
-
-		elif (payload[0] == const.EVENT_BLUEDEVICE) & (not ignoreBlueEvent):
-		    pins.unlock(50)
-		    mqtt.publish([const.EVENT_FLASHMSG, "blue tooth door unlock"] )
-
-		
-		q.task_done()
-	    except Empty as e:
-		    pass
-    
 
 
 if __name__ == "__main__":
