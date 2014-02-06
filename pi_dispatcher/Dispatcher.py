@@ -46,6 +46,9 @@ def process( pins, mqtt, payload ):
         duration = int(payload[4:])
         pins.water(pin, duration)
         mqtt.publish([const.EVENT_FLASHMSG, "Water zone #%s for  %s sec" % (pin, duration)])
+    elif payload == "1":
+        vals = pins.readTemperature()
+        mqtt.publish([const.EVENT_FLASHMSG,"T:{:.1f}\nH:{:.1f}\nD:{:.1f}".format(*vals)])
     else:
         mqtt.publish([const.EVENT_FLASHSCREEN, "Door Unlocked"] )
         logger.info( "incomprehensible message %s " %(payload))
