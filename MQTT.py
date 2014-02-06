@@ -11,8 +11,9 @@ import const
 # outgoing messages call publish direclty
 
 class MQTT:
-    def __init__(self, eventQueue, clientID, inTopic, outTopic):
+    def __init__(self, serverIP, eventQueue, clientID, inTopic, outTopic):
     
+        self.serverIP =  serverIP
         self.logger = logging.getLogger(clientID + "_MQTT")
         self.eventQueue = eventQueue
 	self.inTopic = inTopic
@@ -43,7 +44,7 @@ class MQTT:
         retry=True
         while ( retry ):
             try:
-                self.client.connect("192.168.2.1")  # pi
+                self.client.connect(self.serverIP)  # pi
                 self.client.subscribe(self.inTopic, 0)
 	        self.logger.info("Connecting, subscribing to topic %s" % (self.inTopic))
                 self.client.on_message = on_message
