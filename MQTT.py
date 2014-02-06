@@ -42,25 +42,24 @@ class MQTT:
 	self.socketError = False 
         retry=True
         while ( retry ):
-	    self.logger.info("initial connect")
             try:
-                self.client.connect("192.168.1.38")  # pi
+                self.client.connect("192.168.2.1")  # pi
                 self.client.subscribe(self.inTopic, 0)
+	        self.logger.info("Connecting, subscribing to topic %s" % (self.inTopic))
                 self.client.on_message = on_message
                 self.client.on_disconnect = on_disconnect
 		self.client.on_publish = on_publish
                 retry=False
             except socket_error:
                 retry =  True
-                self.eventQueue.put([const.EVENT_FLASHMSG,"retry MQTT connect"])
+                self.eventQueue.put([const.EVENT_FLASHMSG,"Retry MQTT connect"])
                 self.logger.info("retrying connect")
                 time.sleep(5)
                 
     def publish(self, msg):
-	self.logger.info("publishing %s" % (msg))
-	msg_str = string.join(msg, "|")
+	self.logger.info("Publishing msg %s with topic %s" %  (msg, self.outTopic))
         try:
-	    self.client.publish(self.outTopic,msg_str, 2)
+	    self.client.publish(self.outTopic,string.join(msg, "|"), 2)
 	except socket_error:
             self.eventQueue.put([const.EVENT_FLASHMSG,"socket error"])
 	    self.logger.info("socket error" )
