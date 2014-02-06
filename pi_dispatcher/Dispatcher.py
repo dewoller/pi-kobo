@@ -57,7 +57,7 @@ def processKeyCodes( pins, mqtt, payload ):
 
 def startDispatcher():
 	q = Queue()
-	mqtt = MQTT( q, "dispatcher", "dispatcher", "keypad" )
+	mqtt = MQTT( q, "127.0.0.1", "dispatcher", "dispatcher", "keypad" )
 	bs1 = bluescan.bluescan(q, ["98:D6:F7:B7:A5:DA"])
 	pins =Pins()
 	ignoreBlueEvent=True
