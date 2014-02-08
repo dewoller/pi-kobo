@@ -1,4 +1,4 @@
-foo.log
+*.log
 *.pyc
-*.swp
-
+.*.sw[poq]
+.*.un~
