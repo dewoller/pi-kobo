@@ -44,19 +44,25 @@ def processKeyCodes( pins, mqtt, payload ):
         pins.disableAllPins()
         mqtt.publish([const.EVENT_FLASHMSG, "All Pins Off"] )
     elif payload[0:3] == "999":
-        pin = int(payload[3:4])
-        duration = int(payload[4:])
-        pins.water(pin, duration)
-        mqtt.publish([const.EVENT_FLASHMSG, "Water zone #%s for  %s sec" % (pin, duration)])
+        try:
+	    pin = int(payload[3:4])
+	    duration = int(payload[4:])
+	    pins.water(pin, duration)
+	    mqtt.publish([const.EVENT_FLASHMSG, "Water zone #%s for  %s sec" % (pin, duration)])
+	except ValueError:
+	    mqtt.publish([const.EVENT_FLASHMSG, "What?"])
+	    logger.info( "incomprehensible message %s " %(payload))
+	    
     elif payload == "1":
         vals = pins.readTemperature()
         mqtt.publish([const.EVENT_FLASHMSG,"T:{:.1f}\nH:{:.1f}\nD:{:.1f}".format(*vals)])
     else:
-        mqtt.publish([const.EVENT_FLASHSCREEN, "Door Unlocked"] )
-        logger.info( "incomprehensible message %s " %(payload))
+	mqtt.publish([const.EVENT_FLASHMSG, "What?"])
+	logger.info( "incomprehensible message %s " %(payload))
+
 
 def dispatcherLoop( q, mqtt, pins ):
-    ignoreBlueEvent=True
+    ignoreBlueEvent=False
     while True:
 	try:
 	    payload = q.get(True, 20)
@@ -87,8 +93,9 @@ def startDispatcher():
 	logger.info(type(inst))
 	logger.info(inst)
 	logger.exception(inst)
-        call(["sudo", "/usr/bin/allPinsOff"])
 
+    call(["sudo", "/usr/bin/allPinsOff"])
+    pins.cleanup()
 
 
 if __name__ == "__main__":

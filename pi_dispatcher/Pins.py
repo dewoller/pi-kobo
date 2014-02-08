@@ -6,6 +6,7 @@ import logging
 logger = logging.getLogger()
 
 wateringPins=(7,11,15,12)
+#wateringPins=(11,11,11,11)
 lockPinIndex=3;
 sht1x_dataPin = 22
 sht1x_clkPin = 18
@@ -29,9 +30,10 @@ class Pins:
 
     def GPIO_output( self, pin, what):
         self.logger.info( "setting pin {} to state {} ".format( pin, what))
+	GPIO.setup(pin, GPIO.OUT)
 	GPIO.output(pin, what)
 
-    def enablePin( self, n, duration=8):
+    def enablePin( self, n, duration=20):
 	wateringPin = wateringPins[n]
         self.GPIO_output(wateringPin, P.ON)
         Timer(duration, self.disablePin, [ wateringPin ]).start()
@@ -47,19 +49,25 @@ class Pins:
     def disableAllPins(self ):
 	for wateringPin in wateringPins:
 	    latestOffTime[ wateringPin ] = -1
-	    GPIO.output(wateringPin, P.OFF)
+	    self.GPIO_output(wateringPin, P.OFF)
 
 
     def water(self, n, duration=120):
-        if (n<4):
-	    # because pins number from 1-3, and the fourth pin is for the lock mechanism
+        if (n<4 ) &  (n>0): # error checking
+	    # subtract 1 because pins number from 1-3, and the fourth pin is for the lock mechanism
             self.enablePin(n-1, duration)
+        else:
+	    self.logger.debug( "Invalid watering pin %s " %( n ))
+	    
 
     def unlock(self, nseconds=8):
         self.enablePin(lockPinIndex, nseconds)
 
     def readTemperature( self ):
         return readTemp()
+
+    def cleanup( self ):
+        GPIO.cleanup()
 
 def readTemp( ):
     temperature = sht1x.read_temperature_C()
@@ -73,15 +81,9 @@ def readTemp( ):
  
 from sht1x.Sht1x import Sht1x as SHT1x
 sht1x = SHT1x(sht1x_dataPin, sht1x_clkPin, SHT1x.GPIO_BOARD)
-#print readTemp()
 
 GPIO.setmode(GPIO.BOARD)
-#print readTemp()
 
 for wateringPin in wateringPins:
-    GPIO.setup(wateringPin, GPIO.OUT)
-    GPIO.output(wateringPin, P.OFF)
     latestOffTime[ wateringPin ] = -1
 
-#print readTemp()
-     
