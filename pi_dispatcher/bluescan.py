@@ -17,11 +17,12 @@ class bluescan():
 	while (True):
 	    result = ""
 	    for id in self.ids:
+		startTime = time.time()
 		result += subprocess.check_output(["/usr/bin/hcitool", "name",id])
-	    if (result !=""):
-		logger.debug( "Bluetooth device nearby %s " % (result))
-		eventQueue.put([const.EVENT_BLUEDEVICE])
-		time.sleep(30)
+		if (result !=""):
+		    logger.debug( "Bluetooth device nearby {}, pool took {} seconds ".format(result, time.time()-startTime))
+		    eventQueue.put([const.EVENT_BLUEDEVICE])
+		    time.sleep(30)
 	    time.sleep(10)
 
 

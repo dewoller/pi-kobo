@@ -13,6 +13,12 @@ import const
 from MQTT import MQTT
 import bluescan
 
+
+validBluetoothId = [
+    "B0:EC:71:C9:28:0E", # Galaxy Nexus
+    "98:D6:F7:B7:A5:DA", # nexus 4 
+    "00:18:6B:30:47:00"  # White headset
+    ]  
 class switch(object):
     def __init__(self, value):
         self.value = value
@@ -76,7 +82,7 @@ def dispatcherLoop( q, mqtt, pins ):
 		    logger.debug( "Paying attention to Bluetooth unlock events" )
 
 	    elif (payload[0] == const.EVENT_BLUEDEVICE) & (not ignoreBlueEvent):
-		pins.unlock(50)
+		pins.unlock(70)
 		mqtt.publish([const.EVENT_FLASHMSG, "blue tooth door unlock"] )
 	    q.task_done()
 	except Empty as e:
@@ -86,7 +92,8 @@ def startDispatcher():
     try:
 	q = Queue()
 	mqtt = MQTT(  "127.0.0.1", q, "dispatcher", "dispatcher", "keypad" )
-	bs1 = bluescan.bluescan(q, ["98:D6:F7:B7:A5:DA"])
+	bs1 = bluescan.bluescan(q, validBluetoothId)
+	
 	pins =Pins()
 	dispatcherLoop( q, mqtt, pins)
     except Exception as inst:

@@ -2,10 +2,14 @@ import time
 from Queue import Queue
 from threading import Timer
 from functools import partial
+
+from blink1_pyusb import Blink1 as Blink1_pyusb
+blink1 = Blink1_pyusb()
+
 import logging
 logger = logging.getLogger()
 
-wateringPins=(7,11,15,12)
+wateringPins=(7,12,15,11)
 #wateringPins=(11,11,11,11)
 lockPinIndex=3;
 sht1x_dataPin = 22
@@ -62,6 +66,7 @@ class Pins:
 
     def unlock(self, nseconds=8):
         self.enablePin(lockPinIndex, nseconds)
+        blink1.startBlink(nseconds)
 
     def readTemperature( self ):
         return readTemp()
