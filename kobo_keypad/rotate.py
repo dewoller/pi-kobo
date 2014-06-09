@@ -23,7 +23,6 @@ def clear_screen(screen):
     pygame.display.update()
     call(["/kobo_keypad/full_updatescreen"])
     time.sleep(0.2)
-
 def junk():
     l=pygame.image.load("/kobo_keypad/bs.png")
     drawBaseScreen( screen, labels )

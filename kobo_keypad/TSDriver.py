@@ -26,7 +26,7 @@ class TSDriver:
 	
     def process_touch_input( self, outQ ):
 	waitDuration=.1
-	while (1):
+	while (1):  msg_rect = pygame.rect.Rect(400,100,400,500)    
 	    try:
 		self.processTsEvent( self.tsq.get( True, waitDuration))
 	    except Empty:
