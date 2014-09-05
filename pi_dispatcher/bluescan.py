@@ -20,10 +20,10 @@ class bluescan():
 		startTime = time.time()
 		result += subprocess.check_output(["/usr/bin/hcitool", "name",id])
 		if (result !=""):
-		    logger.debug( "Bluetooth device nearby {}, pool took {} seconds ".format(result, time.time()-startTime))
+		    logger.debug( "Bluetooth device nearby {}, poll took {} seconds ".format(result, time.time()-startTime))
 		    eventQueue.put([const.EVENT_BLUEDEVICE])
-		    time.sleep(30)
-	    time.sleep(10)
+		    time.sleep(20)
+	    time.sleep(5)
 
 
 

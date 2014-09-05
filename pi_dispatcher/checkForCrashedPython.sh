@@ -1,3 +1,3 @@
-#!/bin/sh
- [ -z $(pgrep -f dispatcher_daemon.py) ] && sudo /usr/bin/allPinsOff 
+#!/bin/bash
+ [ -z $(pgrep -f Dispatcher.py | head -1) ] && sudo /usr/bin/allPinsOff 
 

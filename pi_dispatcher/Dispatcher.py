@@ -101,6 +101,7 @@ def startDispatcher():
 	logger.info(inst)
 	logger.exception(inst)
 
+    mqtt.publish([const.EVENT_FLASHMSG, "Exiting Dispatcher"] )
     call(["sudo", "/usr/bin/allPinsOff"])
     pins.cleanup()
 
