@@ -17,7 +17,9 @@ import bluescan
 validBluetoothId = [
     "B0:EC:71:C9:28:0E", # Galaxy Nexus
     "98:D6:F7:B7:A5:DA", # nexus 4 
-    "00:18:6B:30:47:00"  # White headset
+    "B0:EC:71:C9:28:0E"	  #Lees' phone
+    "A4:3D:78:DB:60:72", # Oppo Dennis
+    "00:18:6B:30:47:00",  # White headset
     ]  
 class switch(object):
     def __init__(self, value):

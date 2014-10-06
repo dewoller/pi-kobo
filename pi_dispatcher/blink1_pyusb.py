@@ -156,7 +156,7 @@ class Blink1:
         thread.start_new_thread(self.sustainBlink, (duration, ))
 
     def sustainBlink( self, duration):
-	fade=500
+	fade=50
 	on=1000.0
 	off=00.0
 	cycles=duration / (((fade*2/1000)+on+off)/1000.0)
