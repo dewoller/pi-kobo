@@ -19,7 +19,7 @@ latestOffTime=dict()
 try:
     import RPi.GPIO as GPIO
 except RuntimeError:
-    import RPiMock.GPIO as GPIO
+    import GPIO as GPIO
     logger.info("Error importing RPi.GPIO!  This is probably because you need superuser privileges.  You can achieve this by using 'sudo' to run your script")
 
 

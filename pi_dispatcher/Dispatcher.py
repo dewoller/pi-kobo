@@ -12,6 +12,7 @@ logger = logging.getLogger()
 import const
 from MQTT import MQTT
 import bluescan
+import SerialConnection
 
 
 validBluetoothId = [
@@ -92,6 +93,7 @@ def dispatcherLoop( q, mqtt, pins ):
 
 def startDispatcher():
     try:
+        serialConnection=SerialConnection.SerialConnection(q)
 	q = Queue()
 	mqtt = MQTT(  "127.0.0.1", q, "dispatcher", "dispatcher", "keypad" )
 	bs1 = bluescan.bluescan(q, validBluetoothId)
