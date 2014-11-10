@@ -12,7 +12,7 @@ logger = logging.getLogger()
 import const
 from MQTT import MQTT
 import bluescan
-import SerialConnection
+import SerialCommunications
 
 
 validBluetoothId = [
@@ -46,16 +46,16 @@ class switch(object):
 def processKeyCodes( pins, mqtt, payload ):
     logger.info("processing payload %s" % payload)
     #pdb.set_trace()
-    if payload == "119":
+    if payload == "1235789":
         pins.unlock()
         mqtt.publish([const.EVENT_FLASHMSG, "Door Unlocked"] )
-    elif payload == "666":
+    elif payload == "369":
         pins.disableAllPins()
         mqtt.publish([const.EVENT_FLASHMSG, "All Pins Off"] )
-    elif payload[0:3] == "999":
+    elif payload[0:2] == "XY":
         try:
-	    pin = int(payload[3:4])
-	    duration = int(payload[4:])
+	    pin = int(payload[2:3]) - 6
+	    duration = int(payload[3:])
 	    pins.water(pin, duration)
 	    mqtt.publish([const.EVENT_FLASHMSG, "Water zone #%s for  %s sec" % (pin, duration)])
 	except ValueError:
@@ -93,8 +93,8 @@ def dispatcherLoop( q, mqtt, pins ):
 
 def startDispatcher():
     try:
-        serialConnection=SerialConnection.SerialConnection(q)
 	q = Queue()
+        SerialCommunications.SerialCommunications(q)
 	mqtt = MQTT(  "127.0.0.1", q, "dispatcher", "dispatcher", "keypad" )
 	bs1 = bluescan.bluescan(q, validBluetoothId)
 	
@@ -111,6 +111,20 @@ def startDispatcher():
 
 
 if __name__ == "__main__":
-     startDispatcher()
+    logger = logging.getLogger('root')
+    logger.setLevel(logging.DEBUG)
+    fh = logging.FileHandler("/var/log/dispatcher.log")
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    fh.setFormatter(formatter)
+    logger.addHandler(fh)
+
+    logger = logging.getLogger('root')
+    logger.setLevel(logging.DEBUG)
+    ch = logging.StreamHandler(sys.stdout)
+    ch.setLevel(logging.DEBUG)
+    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+    ch.setFormatter(formatter)
+    logger.addHandler(ch)
+    startDispatcher()
 
 

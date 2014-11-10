@@ -1,10 +1,11 @@
+#!/bin/python 
 import time
 from Queue import Queue
 from threading import Timer
 from functools import partial
 
-from blink1_pyusb import Blink1 as Blink1_pyusb
-blink1 = Blink1_pyusb()
+#from blink1_pyusb import Blink1 as Blink1_pyusb
+#blink1 = Blink1_pyusb()
 
 import logging
 logger = logging.getLogger()
@@ -66,10 +67,11 @@ class Pins:
 
     def unlock(self, nseconds=8):
         self.enablePin(lockPinIndex, nseconds)
-        blink1.startBlink(nseconds)
+        #blink1.startBlink(nseconds)
 
     def readTemperature( self ):
-        return readTemp()
+        #return readTemp()
+        return [0,0,0]
 
     def cleanup( self ):
         GPIO.cleanup()
@@ -84,8 +86,8 @@ def readTemp( ):
     return [temperature, humidity, dewPoint]
    
  
-from sht1x.Sht1x import Sht1x as SHT1x
-sht1x = SHT1x(sht1x_dataPin, sht1x_clkPin, SHT1x.GPIO_BOARD)
+#from sht1x.Sht1x import Sht1x as SHT1x
+#sht1x = SHT1x(sht1x_dataPin, sht1x_clkPin, SHT1x.GPIO_BOARD)
 
 GPIO.setmode(GPIO.BOARD)
 

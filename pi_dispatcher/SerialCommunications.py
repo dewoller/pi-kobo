@@ -65,7 +65,7 @@ class SerialCommunications():
             logger.debug( "Opening Error {} {} " .format(e.errno, e.strerror))
             #time.sleep(10)
         except:
-	    import pdb; pdb.set_trace()
+	    #import pdb; pdb.set_trace()
             logger.debug( "Other error:", sys.exc_info()[0])
 
     def getPort(self):
