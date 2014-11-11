@@ -1,0 +1,4 @@
+#!/bin/sh
+mosquitto_pub -t 'Dispatcher' -h localhost -m '5|allPinsOff'
+sudo /usr/bin/allPinsOff.executable
+
