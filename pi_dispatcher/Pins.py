@@ -8,7 +8,7 @@ from functools import partial
 #blink1 = Blink1_pyusb()
 
 import logging
-logger = logging.getLogger()
+logger = logging.getLogger("dispatcher.pins")
 
 wateringPins=(7,12,15,11)
 #wateringPins=(11,11,11,11)

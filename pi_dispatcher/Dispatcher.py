@@ -8,20 +8,13 @@ from Pins import Pins
 from Queue import Queue, Empty
 from subprocess import call
 import logging
-logger = logging.getLogger()
+logger = logging.getLogger("dispatcher")
 import const
 from MQTT import MQTT
 import bluescan
 import SerialCommunications
 
 
-validBluetoothId = [
-    "B0:EC:71:C9:28:0E", # Galaxy Nexus
-    "98:D6:F7:B7:A5:DA", # nexus 4 
-    "B0:EC:71:C9:28:0E"	  #Lees' phone
-    "A4:3D:78:DB:60:72", # Oppo Dennis
-    "00:18:6B:30:47:00",  # White headset
-    ]  
 class switch(object):
     def __init__(self, value):
         self.value = value
@@ -43,40 +36,40 @@ class switch(object):
             return False
 
 
-def processKeyCodes( pins, mqtt, payload ):
+def processKeyCodes( pins, mqtt, sercon, payload ):
     logger.info("processing payload %s" % payload)
     #pdb.set_trace()
     if payload == "1235789":
         pins.unlock()
-        mqtt.publish([const.EVENT_FLASHMSG, "Door Unlocked"] )
+        sercon.publish([5, "Door Unlocked"] )
     elif payload == "369":
         pins.disableAllPins()
-        mqtt.publish([const.EVENT_FLASHMSG, "All Pins Off"] )
+        sercon.publish([5, "All Pins Off"] )
     elif payload[0:2] == "XY":
         try:
 	    pin = int(payload[2:3]) - 6
 	    duration = int(payload[3:])
 	    pins.water(pin, duration)
-	    mqtt.publish([const.EVENT_FLASHMSG, "Water zone #%s for  %s sec" % (pin, duration)])
+	    sercon.publish([5, "Water zone #%s for  %s sec" % (pin, duration)])
 	except ValueError:
-	    mqtt.publish([const.EVENT_FLASHMSG, "What?"])
+	    sercon.publish([1, "What?"])
 	    logger.info( "incomprehensible message %s " %(payload))
 	    
     elif payload == "1":
         vals = pins.readTemperature()
-        mqtt.publish([const.EVENT_FLASHMSG,"T:{:.1f}\nH:{:.1f}\nD:{:.1f}".format(*vals)])
+        sercon.publish([20,"T:{:.1f}\nH:{:.1f}\nD:{:.1f}".format(*vals)])
     else:
-	mqtt.publish([const.EVENT_FLASHMSG, "What?"])
+	sercon.publish([1, "What?"])
 	logger.info( "incomprehensible message %s " %(payload))
 
 
-def dispatcherLoop( q, mqtt, pins ):
+def dispatcherLoop( q, mqtt, sercon, pins ):
     ignoreBlueEvent=False
     while True:
 	try:
 	    payload = q.get(True, 20)
 	    if payload[0] == const.EVENT_KEYS:
-		    processKeyCodes( pins, mqtt, payload[1] )
+		    processKeyCodes( pins, mqtt, sercon, payload[1] )
 	    elif (payload[0] == const.EVENT_BLUEDEVICETOGGLE):
 		ignoreBlueEvent= not ignoreBlueEvent
 		if ignoreBlueEvent :
@@ -86,7 +79,7 @@ def dispatcherLoop( q, mqtt, pins ):
 
 	    elif (payload[0] == const.EVENT_BLUEDEVICE) & (not ignoreBlueEvent):
 		pins.unlock(70)
-		mqtt.publish([const.EVENT_FLASHMSG, "blue tooth door unlock"] )
+		sercon.publish([5, "blue tooth door unlock"] )
 	    q.task_done()
 	except Empty as e:
 		pass
@@ -94,31 +87,31 @@ def dispatcherLoop( q, mqtt, pins ):
 def startDispatcher():
     try:
 	q = Queue()
-        SerialCommunications.SerialCommunications(q)
+        sercon = SerialCommunications.SerialCommunications(q)
 	mqtt = MQTT(  "127.0.0.1", q, "dispatcher", "dispatcher", "keypad" )
-	bs1 = bluescan.bluescan(q, validBluetoothId)
+	bs1 = bluescan.bluescan(q)
 	
 	pins =Pins()
-	dispatcherLoop( q, mqtt, pins)
+	dispatcherLoop( q, mqtt, sercon, pins)
     except Exception as inst:
 	logger.info(type(inst))
 	logger.info(inst)
 	logger.exception(inst)
 
-    mqtt.publish([const.EVENT_FLASHMSG, "Exiting Dispatcher"] )
+    sercon.publish([const.EVENT_FLASHMSG, "Exiting Dispatcher"] )
     call(["sudo", "/usr/bin/allPinsOff"])
     pins.cleanup()
 
 
 if __name__ == "__main__":
-    logger = logging.getLogger('root')
+    logger = logging.getLogger('dispatcher')
     logger.setLevel(logging.DEBUG)
     fh = logging.FileHandler("/var/log/dispatcher.log")
     formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
     fh.setFormatter(formatter)
     logger.addHandler(fh)
 
-    logger = logging.getLogger('root')
+    logger = logging.getLogger('dispatcher')
     logger.setLevel(logging.DEBUG)
     ch = logging.StreamHandler(sys.stdout)
     ch.setLevel(logging.DEBUG)

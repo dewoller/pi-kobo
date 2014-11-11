@@ -1,5 +1,5 @@
 import logging
-logger = logging.getLogger( "SerialCommunications")
+logger = logging.getLogger( "dispatcher.serial")
 if __name__ == '__main__' and __package__ is None:
     from os import sys, path
     sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
@@ -12,7 +12,6 @@ if __name__ == '__main__' and __package__ is None:
 
 import time, sys
 import const
-logger.debug("Starting")
 import subprocess
 
 from Queue import Queue, Empty
@@ -27,6 +26,7 @@ class SerialCommunications():
     def __init__(self, eventQueue):
 	self.ser=serial.Serial()
 	thread.start_new_thread(self.main, (eventQueue, ))
+	self.hasError = False
 
     def main( self, eventQueue ):
 	while (True):
@@ -37,8 +37,8 @@ class SerialCommunications():
 
             logger.debug( "using port {}" .format(portName))
             self.initPort(portName)
-            hasError=False
-            while (not hasError):
+            self.hasError=False
+            while (not self.hasError):
                 try:
                     logger.debug("about to read") 
                     result = self.readlineCR().rstrip("\r").rstrip("\n")
@@ -50,11 +50,11 @@ class SerialCommunications():
                     if self.ser.isOpen():
                         self.ser.close()
                     #time.sleep(5)
-                    hasError=True
-                except:
+                    self.hasError=True
+                except Exception:
                     logger.debug( "Other error:")
                     logger.debug(sys.exc_info())
-                    hasError=True
+                    self.hasError=True
 
     def initPort(self, portName):
         try:
@@ -64,15 +64,23 @@ class SerialCommunications():
         except (IOError, ValueError) as e:
             logger.debug( "Opening Error {} {} " .format(e.errno, e.strerror))
             #time.sleep(10)
-        except:
+        except Exception:
 	    #import pdb; pdb.set_trace()
-            logger.debug( "Other error:", sys.exc_info()[0])
+            logger.debug( "Other reading error:", sys.exc_info()[0])
 
     def getPort(self):
         for port, desc, hwid in  serial.tools.list_ports.comports():
             if re.search('/dev/ttyACM.', port,re.I ): 
                 return port
         return ''
+
+    def write(self, msg):
+        try:
+            ch = self.ser.writeln( msg )
+        except Exception: 
+            self.hasError=True
+            logger.debug( "writing error:", sys.exc_info()[0])
+
 
     def readlineCR(self):
         rv = ""
@@ -82,6 +90,9 @@ class SerialCommunications():
             if ch=='\r' or ch=='':
                 return rv
 
+    def publish(self, command):
+        self.ser.write( "%03d:%s\n"% (command[0], command[1]) )
+        logger.debug( "Sending Command {}" .format(command))
 
 def main( ):
     q=Queue()

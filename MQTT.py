@@ -14,13 +14,12 @@ class MQTT:
     def __init__(self, serverIP, eventQueue, clientID, inTopic, outTopic):
     
         self.serverIP =  serverIP
-        self.logger = logging.getLogger(clientID + "_MQTT")
+        self.logger = logging.getLogger(clientID + ".MQTT")
         self.eventQueue = eventQueue
 	self.inTopic = inTopic
 	self.outTopic = outTopic
         self.client = mosquitto.Mosquitto(clientID)
         self.socketError = False
-        self.logger.debug("Socket Error Flag = %s" % (self.socketError))
         self.connect()
 
         self.t = Thread(target=self.loop)
@@ -39,8 +38,7 @@ class MQTT:
 		self.connect()
 
 	def on_publish(obj, other, msg ):
-	    self.logger.debug( "completed publish %s " %( msg))
-	    self.logger.debug("Socket Error Flag = %s" % (self.socketError))
+	    self.logger.info( "completed publish %s " %( msg))
 
         retry=True
         while ( retry ):
@@ -48,7 +46,6 @@ class MQTT:
                 self.client.connect(self.serverIP)  # pi
                 self.client.subscribe(self.inTopic, 0)
 	        self.logger.info("Connecting, subscribing to topic %s" % (self.inTopic))
-		self.logger.debug("Socket Error Flag = %s" % (self.socketError))
                 self.client.on_message = on_message
                 self.client.on_disconnect = on_disconnect
 		self.client.on_publish = on_publish
@@ -63,14 +60,13 @@ class MQTT:
                 
     def publish(self, msg):
 	self.logger.info("Publishing msg %s with topic %s" %  (msg, self.outTopic))
-	self.logger.debug("Socket Error Flag = %s" % (self.socketError))
         try:
 	    self.client.publish(self.outTopic,string.join(msg, "|"), 2)
 	except socket_error:
             self.eventQueue.put([const.EVENT_FLASHMSG,"socket error"])
 	    self.socketError = True
 	    self.logger.info("Socket error when trying to publish %s" % (msg) )
-	    self.logger.debug("Socket Error Flag = %s" % (self.socketError))
+	    self.logger.info("Socket Error Flag = %s" % (self.socketError))
 
 	    
 
