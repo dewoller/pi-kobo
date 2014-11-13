@@ -55,9 +55,9 @@ def processKeyCodes( pins, mqtt, sercon, payload ):
 	    sercon.publish([1, "What?"])
 	    logger.info( "incomprehensible message %s " %(payload))
 	    
-    elif payload == "1":
+    elif payload == "147":
         vals = pins.readTemperature()
-        sercon.publish([20,"T:{:.1f}\nH:{:.1f}\nD:{:.1f}".format(*vals)])
+        sercon.publish([20,"Temp:{:.1f},Humidity:{:.1f},DewPoint:{:.1f}".format(*vals)])
     else:
 	sercon.publish([1, "What?"])
 	logger.info( "incomprehensible message %s " %(payload))

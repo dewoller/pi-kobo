@@ -3,6 +3,9 @@ import time
 from Queue import Queue
 from threading import Timer
 from functools import partial
+from sht1x.Sht1x import Sht1x as SHT1x
+sht1x = SHT1x(sht1x_dataPin, sht1x_clkPin, SHT1x.GPIO_BOARD)
+
 
 #from blink1_pyusb import Blink1 as Blink1_pyusb
 #blink1 = Blink1_pyusb()
@@ -70,8 +73,8 @@ class Pins:
         #blink1.startBlink(nseconds)
 
     def readTemperature( self ):
-        #return readTemp()
-        return [0,0,0]
+        return readTemp()
+        #return [0,0,0]
 
     def cleanup( self ):
         GPIO.cleanup()
@@ -86,9 +89,6 @@ def readTemp( ):
     return [temperature, humidity, dewPoint]
    
  
-#from sht1x.Sht1x import Sht1x as SHT1x
-#sht1x = SHT1x(sht1x_dataPin, sht1x_clkPin, SHT1x.GPIO_BOARD)
-
 GPIO.setmode(GPIO.BOARD)
 
 for wateringPin in wateringPins:
