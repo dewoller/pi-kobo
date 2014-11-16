@@ -1,4 +1,4 @@
-import logging
+import logging, traceback
 logger = logging.getLogger( "dispatcher.serial")
 if __name__ == '__main__' and __package__ is None:
     from os import sys, path
@@ -53,7 +53,7 @@ class SerialCommunications():
                     self.hasError=True
                 except Exception:
                     logger.debug( "Other error:")
-                    logger.debug(sys.exc_info())
+                    logger.debug(traceback.format_exc())
                     self.hasError=True
 
     def initPort(self, portName):
@@ -66,20 +66,13 @@ class SerialCommunications():
             #time.sleep(10)
         except Exception:
 	    #import pdb; pdb.set_trace()
-            logger.debug( "Other reading error:", sys.exc_info()[0])
+            logger.debug(traceback.format_exc())
 
     def getPort(self):
         for port, desc, hwid in  serial.tools.list_ports.comports():
             if re.search('/dev/ttyACM.', port,re.I ): 
                 return port
         return ''
-
-    def write(self, msg):
-        try:
-            ch = self.ser.writeln( msg )
-        except Exception: 
-            self.hasError=True
-            logger.debug( "writing error:", sys.exc_info()[0])
 
 
     def readlineCR(self):
@@ -91,8 +84,16 @@ class SerialCommunications():
                 return rv
 
     def publish(self, command):
-        self.ser.write( "%03d:%s\n"% (command[0], command[1]) )
-        logger.debug( "Sending Command {}" .format(command))
+        if self.hasError:
+            logger.debug( "Attempting to write when port closed, will try later")
+            return
+        try:
+            self.ser.write( "%03d:%s\n"% (command[0], command[1]) )
+            logger.debug( "Sending Command {}" .format(command))
+        except Exception: 
+            self.hasError=True
+            logger.debug(traceback.format_exc())
+
 
 def main( ):
     q=Queue()
