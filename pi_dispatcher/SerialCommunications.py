@@ -103,9 +103,14 @@ def main( ):
             print "about to get keys" 
 	    payload = q.get(True)
             print "got keys %s" % payload
+            sc.publish([1,"hello"])
 	    q.task_done()
 	except Empty as e:
-		pass
+	    pass
+	except Exception as e:
+	    pass
+	except KeyboardInterrupt:
+            sys.exit()
 
     
 if __name__ == '__main__':
