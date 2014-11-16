@@ -25,11 +25,11 @@ class bluescan():
 	    for id in validBluetoothId:
 		startTime = time.time()
                 logger.debug( "Searching for Bluetooth {}".format(id))
-		result = subprocess.check_output(["/usr/bin/hcitool", "name",id])
+		result = subprocess.check_output(["/usr/bin/hcitool", "name",id]).strip("\r\n")
                 logger.debug( "finished searching {}, poll took {} seconds".format(id, time.time()-startTime))
 		if (result !=""):
 		    logger.debug( "FOUND device {}".format(result))
-		    eventQueue.put([const.EVENT_BLUEDEVICE])
+		    eventQueue.put([const.EVENT_BLUEDEVICE, result])
 		    time.sleep(20)
 		    break
 	    time.sleep(.1)

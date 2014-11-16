@@ -4,7 +4,6 @@ from Queue import Queue
 from threading import Timer
 from functools import partial
 from sht1x.Sht1x import Sht1x as SHT1x
-sht1x = SHT1x(sht1x_dataPin, sht1x_clkPin, SHT1x.GPIO_BOARD)
 
 
 #from blink1_pyusb import Blink1 as Blink1_pyusb
@@ -18,6 +17,7 @@ wateringPins=(7,12,15,11)
 lockPinIndex=3;
 sht1x_dataPin = 22
 sht1x_clkPin = 18
+sht1x = SHT1x(sht1x_dataPin, sht1x_clkPin, SHT1x.GPIO_BOARD)
 latestOffTime=dict()
 
 try:
