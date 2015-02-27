@@ -98,18 +98,19 @@ class SerialCommunications():
 
 
 def main( ):
+    # testing harness code
     q=Queue()
     sc = SerialCommunications(q)
     while True:
 	i=0	
 	try:
             print "about to get keys" 
-	    #payload = q.get(True)
+	    payload = q.get(True)
             print "got keys %s" % payload
             i = i + 1
             sc.publish([1,"hello %i" % i])
             time.sleep(2)
-	    #q.task_done()
+	    q.task_done()
 	except Empty as e:
 	    pass
 	except Exception as e:
