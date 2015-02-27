@@ -27,6 +27,8 @@ except RuntimeError:
     logger.info("Error importing RPi.GPIO!  This is probably because you need superuser privileges.  You can achieve this by using 'sudo' to run your script")
 
 
+GPIO.setmode(GPIO.BOARD)
+
 class P():
     OFF=GPIO.HIGH
     ON=GPIO.LOW

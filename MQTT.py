@@ -58,10 +58,10 @@ class MQTT:
 
 	self.socketError = False 
                 
-    def publish(self, msg):
-	self.logger.info("Publishing msg %s with topic %s" %  (msg, self.outTopic))
+    def publish(self, topic, msg):
+	self.logger.info("Publishing msg %s with topic %s" %  (msg, topic))
         try:
-	    self.client.publish(self.outTopic,string.join(msg, "|"), 2)
+	    self.client.publish(topic,msg)
 	except socket_error:
             self.eventQueue.put([const.EVENT_FLASHMSG,"socket error"])
 	    self.socketError = True

@@ -40,20 +40,20 @@ class SerialCommunications():
             self.hasError=False
             while (not self.hasError):
                 try:
-                    logger.debug("about to read") 
+                    #logger.debug("about to read") 
                     result = self.readlineCR().rstrip("\r").rstrip("\n")
                     #logger.debug( "Serial Communication Encountered {}, " % result)
                     if result <> "":    
                         eventQueue.put([const.EVENT_KEYS,  result])
                 except (IOError,ValueError) as e:
-                    logger.debug( "Reading Error {} {} " .format(e.errno, e.strerror))
+                    logger.error( "Reading Error {} {} " .format(e.errno, e.strerror))
                     if self.ser.isOpen():
                         self.ser.close()
                     #time.sleep(5)
                     self.hasError=True
                 except Exception:
-                    logger.debug( "Other error:")
-                    logger.debug(traceback.format_exc())
+                    logger.error( "Other error:")
+                    logger.error(traceback.format_exc())
                     self.hasError=True
 
     def initPort(self, portName):
@@ -62,17 +62,19 @@ class SerialCommunications():
             self.ser=serial.Serial(portName, 38400, timeout=20 )
             logger.debug("opened port") 
         except (IOError, ValueError) as e:
-            logger.debug( "Opening Error {} {} " .format(e.errno, e.strerror))
+            logger.error( "Opening Error {} {} " .format(e.errno, e.strerror))
             #time.sleep(10)
         except Exception:
 	    #import pdb; pdb.set_trace()
-            logger.debug(traceback.format_exc())
+            logger.error(traceback.format_exc())
 
     def getPort(self):
         for port, desc, hwid in  serial.tools.list_ports.comports():
+            print port
             if re.search('/dev/ttyACM.', port,re.I ): 
                 return port
-        return ''
+        logger.error("There is no port to open")
+        return '' 
 
 
     def readlineCR(self):
@@ -85,7 +87,7 @@ class SerialCommunications():
 
     def publish(self, command):
         if self.hasError:
-            logger.debug( "Attempting to write when port closed, will try later")
+            logger.error( "Attempting to write when port closed, will try later")
             return
         try:
             self.ser.write( "%03d:%s\n"% (command[0], command[1]) )

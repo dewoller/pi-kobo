@@ -14,7 +14,6 @@ from MQTT import MQTT
 import bluescan
 import SerialCommunications
 
-
 class switch(object):
     def __init__(self, value):
         self.value = value
@@ -36,7 +35,7 @@ class switch(object):
             return False
 
 
-def processKeyCodes( pins, mqtt, sercon, payload ):
+def processKeyCodes( pins, mqtt, sercon, payload, tempDegrees ):
     logger.info("processing payload %s" % payload)
     #pdb.set_trace()
     if payload == "1235789":
@@ -58,6 +57,13 @@ def processKeyCodes( pins, mqtt, sercon, payload ):
     elif payload == "147":
         vals = pins.readTemperature()
         sercon.publish([20,"Temp:{:.1f},Humidity:{:.1f},DewPoint:{:.1f}".format(*vals)])
+        mqtt.publish("temperature","{:.1f}".format(vals[0]))
+        tempDegrees = tempDegrees + max(vals[0]-33,0)
+        mqtt.publish("tempdegrees","{:.1f}".format(tempDegrees))
+        if (tempDegrees > 60 ) :
+            for i in range(1,3):
+                pins.water(i,tempDegrees*10)
+            tempDegrees=0
     else:
 	sercon.publish([1, "What?"])
 	logger.info( "incomprehensible message %s " %(payload))
@@ -65,11 +71,12 @@ def processKeyCodes( pins, mqtt, sercon, payload ):
 
 def dispatcherLoop( q, mqtt, sercon, pins ):
     ignoreBlueEvent=False
+    tempDegrees=0
     while True:
 	try:
 	    payload = q.get(True, 20)
 	    if payload[0] == const.EVENT_KEYS:
-		    processKeyCodes( pins, mqtt, sercon, payload[1] )
+		    processKeyCodes( pins, mqtt, sercon, payload[1], tempDegrees )
 	    elif (payload[0] == const.EVENT_BLUEDEVICETOGGLE):
 		ignoreBlueEvent= not ignoreBlueEvent
 		if ignoreBlueEvent :

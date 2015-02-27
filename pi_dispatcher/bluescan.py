@@ -8,10 +8,10 @@ from Queue import Queue, Empty
 import thread
 
 validBluetoothId = [
-    "B0:EC:71:C9:28:0E",	  #Lees' phone
-    "A4:3D:78:DB:60:72", # Oppo Dennis
+    "B0:EC:71:C9:28:0E",  # Lees' phone
+    "A4:3D:78:DB:60:72",  # Oppo Dennis
     "00:18:6B:30:47:00",  # White LG headset
-    "00:18:6B:A4:3D:FF",  # black LG  headset
+    "1C:48:F9:1F:E5:62",  # Jabra motion  headset
     ]  
 
 
@@ -24,9 +24,9 @@ class bluescan():
 	    result = ""
 	    for id in validBluetoothId:
 		startTime = time.time()
-                logger.debug( "Searching for Bluetooth {}".format(id))
+                #logger.debug( "Searching for Bluetooth {}".format(id))
 		result = subprocess.check_output(["/usr/bin/hcitool", "name",id]).strip("\r\n")
-                logger.debug( "finished searching {}, poll took {} seconds".format(id, time.time()-startTime))
+                #logger.debug( "finished searching {}, poll took {} seconds".format(id, time.time()-startTime))
 		if (result !=""):
 		    logger.debug( "FOUND device {}".format(result))
 		    eventQueue.put([const.EVENT_BLUEDEVICE, result])
