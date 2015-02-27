@@ -101,15 +101,20 @@ def main( ):
     q=Queue()
     sc = SerialCommunications(q)
     while True:
+	i=0	
 	try:
             print "about to get keys" 
-	    payload = q.get(True)
+	    #payload = q.get(True)
             print "got keys %s" % payload
-            sc.publish([1,"hello"])
-	    q.task_done()
+            i = i + 1
+            sc.publish([1,"hello %i" % i])
+            time.sleep(2)
+	    #q.task_done()
 	except Empty as e:
 	    pass
 	except Exception as e:
+            time.sleep(2)
+            logger.debug( "writing error:", sys.exc_info()[0])
 	    pass
 	except KeyboardInterrupt:
             sys.exit()
