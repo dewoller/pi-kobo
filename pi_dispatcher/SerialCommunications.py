@@ -40,9 +40,9 @@ class SerialCommunications():
             self.hasError=False
             while (not self.hasError):
                 try:
-                    #logger.debug("about to read") 
+                    logger.debug("about to read") 
                     result = self.readlineCR().rstrip("\r").rstrip("\n")
-                    #logger.debug( "Serial Communication Encountered {}, " % result)
+                    #logger.debug( "Serial Communication Encountered {}, " .format( result))
                     if result <> "":    
                         eventQueue.put([const.EVENT_KEYS,  result])
                 except (IOError,ValueError) as e:
@@ -59,7 +59,7 @@ class SerialCommunications():
     def initPort(self, portName):
         try:
             logger.debug("About to open port") 
-            self.ser=serial.Serial(portName, 38400, timeout=20 )
+            self.ser=serial.Serial(portName, 115200, timeout=20.0 )
             logger.debug("opened port") 
         except (IOError, ValueError) as e:
             logger.error( "Opening Error {} {} " .format(e.errno, e.strerror))

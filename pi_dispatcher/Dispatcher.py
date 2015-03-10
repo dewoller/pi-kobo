@@ -40,7 +40,7 @@ def processKeyCodes( pins, mqtt, sercon, payload, tempDegrees ):
     #pdb.set_trace()
     if payload == "1235789":
         pins.unlock()
-        sercon.publish([5, "Door Unlocked"] )
+        sercon.publish([2, "Door Unlocked"] )
     elif payload == "369":
         pins.disableAllPins()
         sercon.publish([5, "All Pins Off"] )
@@ -86,7 +86,7 @@ def dispatcherLoop( q, mqtt, sercon, pins ):
 
 	    elif (payload[0] == const.EVENT_BLUEDEVICE) & (not ignoreBlueEvent):
 		pins.unlock(70)
-                sercon.publish([5, "Bluetooth door unlock from: %s" % payload[1] ] )
+                #sercon.publish([5, "Bluetooth door unlock from: %s" % payload[1] ] )
 	    q.task_done()
 	except Empty as e:
 		pass
