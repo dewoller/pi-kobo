@@ -1,4 +1,4 @@
 #!/bin/sh
 mosquitto_pub -t 'Dispatcher' -h localhost -m '5|allPinsOff'
-sudo /code/pi-kobo/pi_dispatcher/allPinsOff.executable
+sudo python /code/pi-kobo/pi_dispatcher/allPinsOff.py
 
