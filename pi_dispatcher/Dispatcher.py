@@ -38,7 +38,7 @@ class switch(object):
 def processKeyCodes( pins, mqtt, sercon, payload, tempDegrees ):
     logger.info("processing payload %s" % payload)
     #pdb.set_trace()
-    if payload == "1235789":
+    if payload == "3695147":
         pins.unlock()
         sercon.publish([2, "Door Unlocked"] )
     elif payload == "369":

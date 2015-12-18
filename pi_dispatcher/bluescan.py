@@ -8,10 +8,9 @@ from Queue import Queue, Empty
 import thread
 
 validBluetoothId = [
-    "B0:EC:71:C9:28:0E",  # Lees' phone
+    "A4:3D:78:DB:60:49",  # Lees' phone
     "A4:3D:78:DB:60:72",  # Oppo Dennis
-    "00:18:6B:30:47:00",  # White LG headset
-    "1C:48:F9:1F:E5:62",  # Jabra motion  headset
+    "98:FE:94:38:58:B4",  # cheriePhone
     ]  
 
 
