@@ -14,6 +14,12 @@ from MQTT import MQTT
 import bluescan
 import SerialCommunications
 
+import string
+rot13 = string.maketrans( 
+    "ABCDEFGHIJKLMabcdefghijklmNOPQRSTUVWXYZnopqrstuvwxyz", 
+    "NOPQRSTUVWXYZnopqrstuvwxyzABCDEFGHIJKLMabcdefghijklm")
+
+
 class switch(object):
     def __init__(self, value):
         self.value = value
@@ -35,21 +41,25 @@ class switch(object):
             return False
 
 
+
 def processKeyCodes( pins, mqtt, sercon, payload):
+
     logger.info("processing payload %s" % payload)
-    #pdb.set_trace()
-    if payload == "3695147":
+    if payload == "3695147" or payload == "69Z32147XY" :
         pins.unlock()
         sercon.publish([2, "Door Unlocked"] )
+        mqtt.publish("door", string.translate(payload, rot13))
     elif payload == "369":
         pins.disableAllPins()
         sercon.publish([5, "All Pins Off"] )
+        mqtt.publish("water/0", "0")
     elif payload[0:2] == "XY":
         try:
 	    pin = int(payload[2:3]) - 6
 	    duration = int(payload[3:])
 	    pins.water(pin, duration)
 	    sercon.publish([5, "Water zone #%s for  %s sec" % (pin, duration)])
+            mqtt.publish("water/%s" % pin, "%s" % duration)
 	except ValueError:
 	    sercon.publish([1, "What?"])
 	    logger.info( "incomprehensible message %s " %(payload))
@@ -57,8 +67,10 @@ def processKeyCodes( pins, mqtt, sercon, payload):
     elif payload == "147":
         vals = pins.readTemperature()
         sercon.publish([20,"Temp:{:.1f},Humidity:{:.1f},DewPoint:{:.1f}".format(*vals)])
-        mqtt.publish("temperature","{:.1f}".format(vals[0]))
-   else:
+        mqtt.publish("sensor1/temperature","{:.1f}".format(vals[0]))
+        mqtt.publish("sensor1/humidity","{:.1f}".format(vals[1]))
+        mqtt.publish("sensor1/dewpoint","{:.1f}".format(vals[2]))
+    else:
 	sercon.publish([1, "What?"])
 	logger.info( "incomprehensible message %s " %(payload))
 
@@ -80,6 +92,8 @@ def dispatcherLoop( q, mqtt, sercon, pins ):
 	    elif (payload[0] == const.EVENT_BLUEDEVICE) & (not ignoreBlueEvent):
 		pins.unlock(70)
                 #sercon.publish([5, "Bluetooth door unlock from: %s" % payload[1] ] )
+                mqtt.publish("blueEvent", payload[ 1 ])
+
 	    q.task_done()
 	except Empty as e:
 		pass
@@ -90,6 +104,7 @@ def startDispatcher():
         sercon = SerialCommunications.SerialCommunications(q)
 	mqtt = MQTT(  "127.0.0.1", q, "dispatcher", "dispatcher", "keypad" )
 	bs1 = bluescan.bluescan(q)
+        mqtt.publish("pi", "starting")
 	
 	pins =Pins()
 	dispatcherLoop( q, mqtt, sercon, pins)
