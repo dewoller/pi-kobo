@@ -9,8 +9,13 @@
 
 apt-get install build-essential python pip python.2.7-dev 
 agi mosquitto python-mosquitto mosquitto-clients
-agi python-serial bluez
+agi python-serial bluez python-daemon
 
+#add user to dialout group
+
+
+agi libssl-dev
+cpan Net:SSLeay
 cpan Forecast::IO
 
 

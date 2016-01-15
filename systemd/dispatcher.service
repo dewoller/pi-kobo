@@ -1,0 +1,13 @@
+[Unit]
+Description=DoorKeypad Dispatcher
+After=syslog.target
+
+[Service]
+Type=simple
+PIDFile=/var/run/dispatcher.pid
+ExecStartPre=/bin/rm -f /var/run/dispatcher.pid
+ExecStart=/code/pi-kobo/pi_dispatcher/dispatcher_daemon.py 
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

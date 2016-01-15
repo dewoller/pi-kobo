@@ -82,6 +82,9 @@ class Pins:
         GPIO.cleanup()
 
 def readTemp( ):
+    temperature = 0
+    humidity = 0
+    dewPoint=0
     temperature = sht1x.read_temperature_C()
     humidity = sht1x.read_humidity()
     dewPoint=0

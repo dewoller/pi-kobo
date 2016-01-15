@@ -45,8 +45,14 @@ class SerialCommunications():
                     #logger.debug( "Serial Communication Encountered {}, " .format( result))
                     if result <> "":    
                         eventQueue.put([const.EVENT_KEYS,  result])
-                except (IOError,ValueError) as e:
-                    logger.error( "Reading Error {} {} " .format(e.errno, e.strerror))
+                except (IOError) as e:
+                    logger.error( "IOError Reading Error {} {} " .format(e.errno, e.strerror))
+                    if self.ser.isOpen():
+                        self.ser.close()
+                    #time.sleep(5)
+                    self.hasError=True
+                except (ValueError) as e:
+                    logger.error( "Value Reading Error " )
                     if self.ser.isOpen():
                         self.ser.close()
                     #time.sleep(5)

@@ -57,7 +57,7 @@ class Sht1x(object):
     def __init__(self, dataPin, sckPin, gpioMode = GPIO_BOARD):
         self.dataPin = dataPin
         self.sckPin = sckPin
-#        GPIO.setmode(gpioMode)
+        GPIO.setmode(gpioMode)
         
 #    I deliberately will not implement read_temperature_F because I believe in the
 #    in the Metric System (http://en.wikipedia.org/wiki/Metric_system)
