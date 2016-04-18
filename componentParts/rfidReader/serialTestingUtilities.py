@@ -1,5 +1,5 @@
 import serial
-def dump(sdev=s):
+def dump(sdev):
     while True:
         c=sdev.read()
         if(c==""):
@@ -16,6 +16,9 @@ def reset(s):
 
 def getSerial(dev="/dev/ttyAMA0", timeout=.1):
     return( serial.Serial(dev, 19200, timeout=timeout))
+
+if __name__ == '__main__':
+    import pdb; pdb.set_trace()
 
 
 
