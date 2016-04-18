@@ -12,7 +12,7 @@ from sht1x.Sht1x import Sht1x as SHT1x
 import logging
 logger = logging.getLogger("dispatcher.pins")
 
-wateringPins=(7,12,15,11)
+wateringPins=(7,11,13,15)
 #wateringPins=(11,11,11,11)
 lockPinIndex=3;
 sht1x_dataPin = 22
