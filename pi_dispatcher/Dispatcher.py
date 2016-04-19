@@ -12,6 +12,7 @@ import Pins
 import LCD
 import Music
 import Keypad
+import RFID
 
 rot13 = string.maketrans( 
     "ABCDEFGHIJKLMabcdefghijklmNOPQRSTUVWXYZnopqrstuvwxyz", 
@@ -40,7 +41,7 @@ class switch(object):
 
 
 
-def processKeyCodes( pins, mqtt, LCDScreen, keypad, music, payload):
+def processKeyCodes( pins, mqtt, LCDScreen, keypad, music, RFID, payload):
 
     logger.info("processing payload %s" % payload)
     if payload == "3695147" or payload == "6932147XY" :
@@ -73,16 +74,20 @@ def processKeyCodes( pins, mqtt, LCDScreen, keypad, music, payload):
         logger.info( "incomprehensible message %s " %(payload))
 
 
-def dispatcherLoop( q, mqtt, LCDScreen, pins , keypad, music):
+def dispatcherLoop( q, mqtt, LCDScreen, pins, keypad, RFID, music):
+    RFID.readTag()
     while True:
 	try:
-	    payload = q.get(True, 20)
+	    payload = q.get(True, 30)
 	    q.task_done()
 	    if payload[0] == const.EVENT_KEYS:
-		    processKeyCodes( pins, mqtt, LCDScreen, keypad, music, payload[1])
+                processKeyCodes( pins, mqtt, LCDScreen, keypad, RFID, music, payload[1])
+	    elif payload[0] == const.EVENT_RFID_GETTAG:
+                logger.debug("tag received: %s " % payload(1))
 
 	except Empty as e:
-		pass
+            RFID.readTag()
+	        
 
 def startDispatcher():
     try:
@@ -93,7 +98,8 @@ def startDispatcher():
         pins =Pins.Pins()
         keypad = Keypad.Keypad(q)
         music = Music.Music(q)
-        dispatcherLoop( q, mqtt, LCDScreen, pins, keypad, music)
+        RFID = RFID.RFID(q)
+        dispatcherLoop( q, mqtt, LCDScreen, pins, keypad, RFID, music)
     except Exception as inst:
         logger.info(type(inst))
         logger.info(inst)

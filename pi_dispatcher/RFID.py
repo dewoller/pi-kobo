@@ -64,16 +64,7 @@ class RFID():
                     logger.info("Real Tag: %s" % ( payload.encode("hex")))
                     eventQueue.put([const.EVENT_RFID_HASTAG,  payload])
                     self.getNextTag()
-            elif eventName == 'ReadPort' :
-                logger.info("Port Status %s" % ( payload.encode("hex")))
-                if payload <> lastSwitch:
-                    # we have a change
-                    for (tbit, lbit, switch) in zip(bits(payload), bits(lastSwitch), range(2)):
-                        if tbit>lbit:
-                            eventQueue.put([const.EVENT_RFID_SWITCHDOWN, switch ])
-                        elif tbit<lbit:
-                            eventQueue.put([const.EVENT_RFID_SWITCHUP, switch ])
-
+        
 
 
 #EVENT_RFID_SWITCHDOWN           = "22"
@@ -154,17 +145,8 @@ def main( ):
         time.sleep(1)   # check for timeout
         logger.debug("getting Tag")
         sc.readTag()
-        time.sleep(2)
+        time.sleep(10)
     
-        logger.debug("reading Port")
-        sc.readPort()
-        while True:
-            time.sleep(.1)
-            try:
-                payload = q.get(True, .1)
-                logger.debug("switch %s state %s" % payload)
-            except Queue.Empty:
-                break
         for i in range(4):
             logger.debug("Writing Port with %s" % i )
             sc.writePort( bytes(chr(i) ))
