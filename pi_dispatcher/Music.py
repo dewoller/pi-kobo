@@ -33,25 +33,13 @@ songs = [
 
 
 class Music():
-    def __init__(self, eventQueue):
-        thread.start_new_thread(self.main, (eventQueue, ))
-
-    def main( self, eventQueue ):
-	while (True):
-	    payload = eventQueue.get(True)
-            if payload[0]==const.EVENT_SONG1:
-                self.playSong( eventQueue , songs[0])
-            elif payload[0]==const.EVENT_SONG2:
-                self.playSong( eventQueue, songs[1] )
-            elif payload[0]==const.EVENT_SONG3:
-                self.playSong( eventQueue, songs[2] )
-    
-    def playSong( self, eventQueue, song ):
-        eventQueue.task_done()
+    def __init__(self):
+        pass
+    def playSong( self, song ):
         GPIO.setup(12, GPIO.OUT)
         pin = GPIO.PWM(12, 5000)  # channel=12 frequency=50Hz
         pin.start(0)
-        self.playNotes(pin, song)
+        self.playNotes(pin, songs[ song ])
             
     def playNotes( self, pin, song ):
         for note in zip( song[0], song[1]):
@@ -66,15 +54,13 @@ class Music():
         time.sleep( length/2)
 
 def main( ):
-    from Queue import Queue
-    q=Queue()
-    sc = Music(q)
+    sc = Music()
     while True:
-        q.put([const.EVENT_SONG1, "hello"])
+        sc.playSong(0)
         time.sleep(10)
-        q.put([const.EVENT_SONG2,"" ])
+        sc.playSong(1)
         time.sleep(10)
-        q.put([const.EVENT_SONG3, "hello"])
+        sc.playSong(2)
         time.sleep(10)
     
 if __name__ == '__main__':

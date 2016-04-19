@@ -10,14 +10,11 @@ from sht1x.Sht1x import Sht1x as SHT1x
 #blink1 = Blink1_pyusb()
 
 import logging
-logger = logging.getLogger("dispatcher.pins")
+logger = logging.getLogger("dispatcher")
 
 wateringPins=(7,11,13,15)
 #wateringPins=(11,11,11,11)
 lockPinIndex=3;
-sht1x_dataPin = 22
-sht1x_clkPin = 18
-sht1x = SHT1x(sht1x_dataPin, sht1x_clkPin, SHT1x.GPIO_BOARD)
 latestOffTime=dict()
 
 try:
@@ -25,9 +22,11 @@ try:
 except RuntimeError:
     import GPIO as GPIO
     logger.info("Error importing RPi.GPIO!  This is probably because you need superuser privileges.  You can achieve this by using 'sudo' to run your script")
-
-
 GPIO.setmode(GPIO.BOARD)
+
+sht1x_dataPin = 22
+sht1x_clkPin = 18
+sht1x = SHT1x(sht1x_dataPin, sht1x_clkPin, SHT1x.GPIO_BOARD)
 
 class P():
     OFF=GPIO.HIGH
@@ -85,6 +84,7 @@ def readTemp( ):
     temperature = 0
     humidity = 0
     dewPoint=0
+    GPIO.setmode(GPIO.BOARD) 
     temperature = sht1x.read_temperature_C()
     humidity = sht1x.read_humidity()
     dewPoint=0

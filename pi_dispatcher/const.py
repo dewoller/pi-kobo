@@ -23,6 +23,7 @@ EVENT_RFID_GETFIRMWAREVERSION   = "23"
 EVENT_RFID_GETTAG               = "24"
 EVENT_RFID_READPORT             = "25"
 EVENT_RFID_WRITEPORT            = "26"
+EVENT_RFID_SELECTTAG            = "27"
 
 EVENT_RFID_HASTAG               = "21"
 EVENT_RFID_SWITCHDOWN           = "22"
@@ -33,4 +34,28 @@ EVENT_SONG2="94"
 EVENT_SONG3="95"
 
 
+
+sm130Names = {
+    "Reset": 0x80,
+    "Firmware": 0x81,
+    "Seek": 0x82,
+    "Select": 0x83,
+    "Authenticate": 0x85,
+    "ReadBlock": 0x86,
+    "ReadValue": 0x87,
+    "WriteBlock": 0x89,
+    "WriteValue": 0x8A,
+    "Write4": 0x8B,
+    "WriteKey": 0x8C,
+    "Increment": 0x8D,
+    "Decrement": 0x8E,
+    "Antenna": 0x90,
+    "ReadPort": 0x91,
+    "WritePort": 0x92,
+    "Halt": 0x93,
+    "Baud": 0x94,
+    "Sleep": 0x96
+    }
+
+sm130Vals = dict([[v,k] for k,v in sm130Names.items()])
 

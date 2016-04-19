@@ -1,11 +1,14 @@
 import serial
 def dump(sdev):
+    rv=""
     while True:
         c=sdev.read()
         if(c==""):
             break
         print(c),
+        rv=rv+c
     print()
+    return(rv)
 
 
 def mput(s, str):

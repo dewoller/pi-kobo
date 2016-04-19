@@ -1,20 +1,18 @@
 #!/usr/bin/python 
-if __name__ == '__main__' and __package__ is None:
-    from os import sys, path
-    sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
-
-#import pdb ;pdb.set_trace()
-from Pins import Pins
 from Queue import Queue, Empty
+import sys
 from subprocess import call
 import logging
-logger = logging.getLogger("dispatcher")
-import const
-from MQTT import MQTT
-import bluescan
-import SerialCommunications
-
 import string
+logger = logging.getLogger("dispatcher" )
+
+import const
+import MQTT
+import Pins
+import LCD
+import Music
+import Keypad
+
 rot13 = string.maketrans( 
     "ABCDEFGHIJKLMabcdefghijklmNOPQRSTUVWXYZnopqrstuvwxyz", 
     "NOPQRSTUVWXYZnopqrstuvwxyzABCDEFGHIJKLMabcdefghijklm")
@@ -42,89 +40,71 @@ class switch(object):
 
 
 
-def processKeyCodes( pins, mqtt, sercon, payload):
+def processKeyCodes( pins, mqtt, LCDScreen, keypad, music, payload):
 
     logger.info("processing payload %s" % payload)
-    if payload == "3695147" or payload == "69Z32147XY" :
+    if payload == "3695147" or payload == "6932147XY" :
         pins.unlock()
-        sercon.publish([2, "Door Unlocked"] )
+        LCDScreen.publish([2, "Door Unlocked"] )
         mqtt.publish("door", string.translate(payload, rot13))
     elif payload == "369":
         pins.disableAllPins()
-        sercon.publish([5, "All Pins Off"] )
+        LCDScreen.publish([5, "All Pins Off"] )
         mqtt.publish("water/0", "0")
     elif payload[0:2] == "XY":
         try:
-	    pin = int(payload[2:3]) - 6
-	    duration = int(payload[3:])
-	    pins.water(pin, duration)
-	    sercon.publish([5, "Water zone #%s for  %s sec" % (pin, duration)])
+            pin = int(payload[2:3]) - 6
+            duration = int(payload[3:])
+            pins.water(pin, duration)
+            LCDScreen.publish([5, "Water zone #%s for  %s sec" % (pin, duration)])
             mqtt.publish("water/%s" % pin, "%s" % duration)
-	except ValueError:
-	    sercon.publish([1, "What?"])
-	    logger.info( "incomprehensible message %s " %(payload))
+        except ValueError:
+            LCDScreen.publish([1, "What?"])
+            logger.info( "incomprehensible message %s " %(payload))
 	    
     elif payload == "147":
         vals = pins.readTemperature()
-        sercon.publish([20,"Temp:{:.1f},Humidity:{:.1f},DewPoint:{:.1f}".format(*vals)])
+        LCDScreen.publish([20,"Temp:{:.1f},Humidity:{:.1f},DewPoint:{:.1f}".format(*vals)])
         mqtt.publish("sensor1/temperature","{:.1f}".format(vals[0]))
-        mqtt.publish("sensor1/humidity","{:.1f}".format(vals[1]))
-        mqtt.publish("sensor1/dewpoint","{:.1f}".format(vals[2]))
+        #mqtt.publish("sensor1/humidity","{:.1f}".format(vals[1]))
+        #mqtt.publish("sensor1/dewpoint","{:.1f}".format(vals[2]))
     else:
-	sercon.publish([1, "What?"])
-	logger.info( "incomprehensible message %s " %(payload))
+        LCDScreen.publish([1, "What?"])
+        logger.info( "incomprehensible message %s " %(payload))
 
 
-def dispatcherLoop( q, mqtt, sercon, pins ):
-    ignoreBlueEvent=False
+def dispatcherLoop( q, mqtt, LCDScreen, pins , keypad, music):
     while True:
 	try:
 	    payload = q.get(True, 20)
-	    if payload[0] == const.EVENT_KEYS:
-		    processKeyCodes( pins, mqtt, sercon, payload[1])
-	    elif (payload[0] == const.EVENT_BLUEDEVICETOGGLE):
-		ignoreBlueEvent= not ignoreBlueEvent
-		if ignoreBlueEvent :
-		    logger.debug( "Ignoring Bluetooth unlock events" )
-		else:
-		    logger.debug( "Paying attention to Bluetooth unlock events" )
-
-	    elif (payload[0] == const.EVENT_BLUEDEVICE) & (not ignoreBlueEvent):
-		pins.unlock(70)
-                #sercon.publish([5, "Bluetooth door unlock from: %s" % payload[1] ] )
-                mqtt.publish("blueEvent", payload[ 1 ])
-
 	    q.task_done()
+	    if payload[0] == const.EVENT_KEYS:
+		    processKeyCodes( pins, mqtt, LCDScreen, keypad, music, payload[1])
+
 	except Empty as e:
 		pass
 
 def startDispatcher():
     try:
-	q = Queue()
-        sercon = SerialCommunications.SerialCommunications(q)
-	mqtt = MQTT(  "127.0.0.1", q, "dispatcher", "dispatcher", "keypad" )
-	bs1 = bluescan.bluescan(q)
+        q = Queue()
+        LCDScreen = LCD.LCD()
+        mqtt = MQTT.MQTT(  "192.168.1.38", q, "newDispatcher", "dispatcher", "keypad" )
         mqtt.publish("pi", "starting")
-	
-	pins =Pins()
-	dispatcherLoop( q, mqtt, sercon, pins)
+        pins =Pins.Pins()
+        keypad = Keypad.Keypad(q)
+        music = Music.Music(q)
+        dispatcherLoop( q, mqtt, LCDScreen, pins, keypad, music)
     except Exception as inst:
-	logger.info(type(inst))
-	logger.info(inst)
-	logger.exception(inst)
+        logger.info(type(inst))
+        logger.info(inst)
+        logger.exception(inst)
 
-    sercon.publish([const.EVENT_FLASHMSG, "Exiting Dispatcher"] )
+    LCDScreen.publish([const.EVENT_FLASHMSG, "Exiting Dispatcher"] )
     call(["sudo", "/usr/bin/allPinsOff"])
     pins.cleanup()
 
 
 if __name__ == "__main__":
-    logger = logging.getLogger('dispatcher')
-    logger.setLevel(logging.DEBUG)
-    fh = logging.FileHandler("/var/log/dispatcher.log")
-    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    fh.setFormatter(formatter)
-    logger.addHandler(fh)
 
     logger = logging.getLogger('dispatcher')
     logger.setLevel(logging.DEBUG)

@@ -1,10 +1,8 @@
 #!/bin/python 
 
-import logging, traceback
+import logging, traceback, sys
 logger = logging.getLogger( "dispatcher.RFID")
 if __name__ == '__main__' and __package__ is None:
-    from os import sys, path
-    sys.path.append(path.dirname(path.dirname(path.abspath(__file__))))
     logger.setLevel(logging.DEBUG)
     ch = logging.StreamHandler(sys.stdout)
     ch.setLevel(logging.DEBUG)
@@ -49,36 +47,14 @@ class RFID():
         self.ser=getSerial()
         time.sleep(1)
         self.resetRFID()
-
-	thread.start_new_thread(self.reader, (eventQueue, ))
-	thread.start_new_thread(self.writer, (eventQueue, ))
-
-    def writer( self, eventQueue ):
-	while (True):
-	    payload = eventQueue.get(True)
-            if payload[0]==const.EVENT_RFID_GETFIRMWAREVERSION:
-                self.prepareRFID( eventQueue )
-                self.getFirmwareVersion(  )
-
-            elif payload[0]==const.EVENT_RFID_GETTAG:
-                self.prepareRFID( eventQueue )
-                self.readTag(  )
-            elif payload[0]==const.EVENT_RFID_WRITEPORT:
-                self.prepareRFID( eventQueue )
-                self.writePort( payload[1] )
-            elif payload[0]==const.EVENT_RFID_READPORT:
-                self.readPort(  )
-                self.prepareRFID( eventQueue )
-    
-            elif payload[0]==const.EVENT_RFID_SELECTTAG:
-                self.prepareRFID( eventQueue )
+        thread.start_new_thread(self.reader, (eventQueue, ))
     
     def prepareRFID( self, eventQueue ):
         eventQueue.task_done()
 
     def reader( self, eventQueue ):
         lastSwitch = '\x00'
-	while (True):
+        while (True):
             (eventType, payload) = self.read_command( )
             eventName = sm130Val[ eventType ]
             if eventName == 'Firmware'  or eventName == 'Reset':
@@ -174,14 +150,14 @@ def main( ):
 #EVENT_RFID_READPORT             = "25"
 #EVENT_RFID_WRITEPORT            = "26"
         logger.debug("getting Firmware")
-        q.put([const.EVENT_RFID_GETFIRMWAREVERSION, "hello"])
+        sc.getFirmwareVersion()
         time.sleep(1)   # check for timeout
         logger.debug("getting Tag")
-        q.put([const.EVENT_RFID_GETTAG,"" ])
+        sc.readTag()
         time.sleep(2)
     
         logger.debug("reading Port")
-        q.put([const.EVENT_RFID_READPORT,"" ])
+        sc.readPort()
         while True:
             time.sleep(.1)
             try:
@@ -191,7 +167,7 @@ def main( ):
                 break
         for i in range(4):
             logger.debug("Writing Port with %s" % i )
-            q.put([const.EVENT_RFID_WRITEPORT, bytes(chr(i)) ])
+            sc.writePort( bytes(chr(i) ))
             time.sleep(.1)
     
 if __name__ == '__main__':
