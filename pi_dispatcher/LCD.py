@@ -15,9 +15,12 @@ if __name__ == '__main__' and __package__ is None:
     logger.addHandler(ch)
 
 import time
+from Queue import Queue
 import const
 import thread, sys
+from threading import Timer
 from i2clibraries import i2c_lcd_smbus
+timeout = 10
 
 class LCD():
     def __init__(self, eventQueue):
@@ -30,6 +33,7 @@ class LCD():
         self.lcd.command(self.lcd.CMD_Display_Control | self.lcd.OPT_Enable_Display)
         self.lcd.backLightOn()
         self.isLighted=True
+        self.lastDisplayTime=time.time()
 	thread.start_new_thread(self.main, (eventQueue, ))
 
     def main( self, eventQueue ):
@@ -56,15 +60,22 @@ class LCD():
             self.lcd.backLightOn()
             self.isLighted=True
         eventQueue.task_done()
-            
+        self.lastDisplayTime=time.time()
+        Timer(timeout + 1, self.checkForTimeout, []).start()
+
+
+    def checkForTimeout(self):
+
+	if self.lastDisplayTime + timeout <= time.time():
+            self.lcd.backLightOff()
+            self.isLighted=False
 
 def main( ):
-    from Queue import Queue
     q=Queue()
     sc = LCD(q)
     while True:
         q.put([const.EVENT_DISPLAYLINE1, "hello"])
-        time.sleep(2)
+        time.sleep(15)   # check for timeout
         q.put([const.EVENT_DISPLAYCLEAR,"" ])
         time.sleep(1)
         q.put([const.EVENT_DISPLAYLINE2, "hello"])

@@ -36,30 +36,30 @@ class P():
 
 class Pins:
     def __init__(self):
-	self.logger = logging.getLogger()
+        pass
 
     def GPIO_output( self, pin, what):
-        self.logger.info( "setting pin {} to state {} ".format( pin, what))
-	GPIO.setup(pin, GPIO.OUT)
-	GPIO.output(pin, what)
+        logger.info( "setting pin {} to state {} ".format( pin, what))
+        GPIO.setup(pin, GPIO.OUT)
+        GPIO.output(pin, what)
 
     def enablePin( self, n, duration=20):
-	wateringPin = wateringPins[n]
+        wateringPin = wateringPins[n]
         self.GPIO_output(wateringPin, P.ON)
         Timer(duration, self.disablePin, [ wateringPin ]).start()
         latestOffTime[ wateringPin ] = max( latestOffTime[ wateringPin ], time.time() + duration)
 
 
     def disablePin(self,  wateringPin):
-        self.logger.debug( "latestoff {} compared to time {} , pin {}".format( latestOffTime[ wateringPin ],time.time(), wateringPin))
+        logger.debug( "latestoff {} compared to time {} , pin {}".format( latestOffTime[ wateringPin ],time.time(), wateringPin))
 
 	if latestOffTime[ wateringPin ]-1 <= time.time():
 	    self.GPIO_output(wateringPin, P.OFF)
 
     def disableAllPins(self ):
-	for wateringPin in wateringPins:
-	    latestOffTime[ wateringPin ] = -1
-	    self.GPIO_output(wateringPin, P.OFF)
+        for wateringPin in wateringPins:
+            latestOffTime[ wateringPin ] = -1
+            self.GPIO_output(wateringPin, P.OFF)
 
 
     def water(self, n, duration=120):
@@ -67,7 +67,7 @@ class Pins:
 	    # subtract 1 because pins number from 1-3, and the fourth pin is for the lock mechanism
             self.enablePin(n-1, duration)
         else:
-	    self.logger.debug( "Invalid watering pin %s " %( n ))
+            logger.debug( "Invalid watering pin %s " %( n ))
 	    
 
     def unlock(self, nseconds=8):
