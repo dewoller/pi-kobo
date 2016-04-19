@@ -45,8 +45,10 @@ sm130Val = dict([[v,k] for k,v in sm130Code.items()])
 class RFID():
     def __init__(self, eventQueue):
         self.ser=getSerial()
-        time.sleep(1)
+        time.sleep(.1)
         self.resetRFID()
+        time.sleep(.1)
+        self.readTag()
         thread.start_new_thread(self.reader, (eventQueue, ))
     
     def prepareRFID( self, eventQueue ):

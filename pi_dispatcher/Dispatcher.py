@@ -41,7 +41,7 @@ class switch(object):
 
 
 
-def processKeyCodes( pins, mqtt, LCDScreen, keypad, music, RFID, payload):
+def processKeyCodes( pins, mqtt, LCDScreen, keypad, music, RFIDReader, payload):
 
     logger.info("processing payload %s" % payload)
     if payload == "3695147" or payload == "6932147XY" :
@@ -74,8 +74,8 @@ def processKeyCodes( pins, mqtt, LCDScreen, keypad, music, RFID, payload):
         logger.info( "incomprehensible message %s " %(payload))
 
 
-def dispatcherLoop( q, mqtt, LCDScreen, pins, keypad, RFID, music):
-    RFID.readTag()
+def dispatcherLoop( q, mqtt, LCDScreen, pins, keypad, RFIDReader, music):
+    RFIDReader.readTag()
     while True:
 	try:
 	    payload = q.get(True, 30)
@@ -86,7 +86,7 @@ def dispatcherLoop( q, mqtt, LCDScreen, pins, keypad, RFID, music):
                 logger.debug("tag received: %s " % payload(1))
 
 	except Empty as e:
-            RFID.readTag()
+            RFIDReader.readTag()
 	        
 
 def startDispatcher():
@@ -97,9 +97,9 @@ def startDispatcher():
         mqtt.publish("pi", "starting")
         pins =Pins.Pins()
         keypad = Keypad.Keypad(q)
-        music = Music.Music(q)
-        RFID = RFID.RFID(q)
-        dispatcherLoop( q, mqtt, LCDScreen, pins, keypad, RFID, music)
+        music = Music.Music()
+        RFIDReader = RFID.RFID(q)
+        dispatcherLoop( q, mqtt, LCDScreen, pins, keypad, RFIDReader, music)
     except Exception as inst:
         logger.info(type(inst))
         logger.info(inst)
