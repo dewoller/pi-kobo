@@ -54,27 +54,27 @@ class RFID():
     def prepareRFID( self, eventQueue ):
         eventQueue.task_done()
 
+    # continuiously runs, reading and posting tags on event queue
     def reader( self, eventQueue ):
-        lastSwitch = '\x00'
         while (True):
             (eventType, payload) = self.read_command( )
             eventName = sm130Val[ eventType ]
             if eventName == 'Firmware'  or eventName == 'Reset':
                 logger.info("Firmware: %s" % (payload))
+                self.readTag()  # our job is to always be reading tags
             elif eventName == 'Seek' :
                 if payload <> '\x4c':
-                    logger.info("Real Tag: %s" % ( payload.encode("hex")))
-                    eventQueue.put([const.EVENT_RFID_HASTAG,  payload])
+                    tag =payload.encode("hex") 
+                    logger.info("Real Tag: %s" % ( tag ))
+                    eventQueue.put([const.EVENT_RFID_HASTAG,  tag ])
                     self.getNextTag()
+            else:
+                self.readTag()  # dont care what happened, get back to reading tags
         
-
-
-#EVENT_RFID_SWITCHDOWN           = "22"
-#EVENT_RFID_SWITCHUP             = "28"
     def send_command(self, command, payload=''):
         packet = build_packet(command, payload)
         self.ser.write(packet)
-        logger.debug(packet.encode('hex'))
+        logger.debug("Sent a packet %s" % packet.encode('hex'))
 
     def read_command(self ):
         header = ""

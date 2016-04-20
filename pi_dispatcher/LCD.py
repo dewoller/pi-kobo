@@ -33,31 +33,49 @@ class LCD():
         self.isLighted=True
         self.lastDisplayTime=time.time()
         self.timer = self.initializeTimer()
-
-    def displayLine1( self, message) :
+        self.pos=0
+        
+    def displayChar( self, char ):
         self.prepareWrite()
-        self.lcd.home()
-        self.lcd.writeString( message )
+        if self.pos==0:
+            self.displayClear()
 
-    def displayLine2( self, message) :
-        self.prepareWrite()
-        self.lcd.setPosition(2, 0) 
-        self.lcd.writeString( message )
+        self.lcd.setPosition(self.pos // 16+1,self.pos % 16)
+        self.lcd.writeString( char )
+        self.pos=self.pos+len(char)
+        if self.pos>=32:
+            self.pos=0
 
     def displayClear( self) :
         self.prepareWrite()
         self.lcd.clear()
+        self.pos=0
 
     def displayOff( self) :
         self.lcd.backLightOff()
         self.isLighted=False
 
     def publish( self, message ):
+        self.display( message[1] )
+
+    def display( self, message ):
         self.prepareWrite()
         self.displayClear()
-        self.displayLine1(message[1][:16])
-        self.displayLine2(message[1][17:])
-    
+        self.displayLine1(message[:16])
+        self.displayLine2(message[17:])
+
+    def displayLine1( self, message) :
+        self.pos=0
+        self.prepareWrite()
+        self.lcd.home()
+        self.lcd.writeString( message )
+
+    def displayLine2( self, message) :
+        self.pos=0
+        self.prepareWrite()
+        self.lcd.setPosition(2, 0) 
+        self.lcd.writeString( message ) 
+
     def prepareWrite( self):
         if not self.isLighted:
             self.lcd.backLightOn()

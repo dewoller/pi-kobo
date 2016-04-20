@@ -52,7 +52,7 @@ class MQTT:
                 retry=False
             except socket_error:
                 retry =  True
-                self.eventQueue.put([const.EVENT_FLASHMSG,"Retry MQTT connect"])
+                self.eventQueue.put([const.EVENT_MQTTERROR,"Retry MQTT connect"])
                 self.logger.info("Retrying MQTT connect")
                 time.sleep(5)
 
@@ -63,7 +63,7 @@ class MQTT:
         try:
             self.client.publish(topic,msg)
         except socket_error:
-            self.eventQueue.put([const.EVENT_FLASHMSG,"socket error"])
+            self.eventQueue.put([const.EVENT_MQTTERROR,"socket error"])
             self.socketError = True
             self.logger.info("Socket error when trying to publish %s" % (msg) )
             self.logger.info("Socket Error Flag = %s" % (self.socketError))

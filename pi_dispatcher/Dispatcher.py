@@ -23,7 +23,7 @@ q = Queue()
 LCDScreen = LCD.LCD()
 mqtt = MQTT.MQTT(  "192.168.1.38", q, "newDispatcher", "dispatcher", "keypad" )
 mqtt.publish("pi", "starting")
-pins =Pins.Pins()
+pins =Pins.Pins( q )
 keypad = Keypad.Keypad(q)
 music = Music.Music()
 RFIDReader = RFID.RFID(q)
@@ -51,7 +51,7 @@ def processKeyCodes( payload):
         except ValueError:
             LCDScreen.publish([1, "What?"])
             logger.info( "incomprehensible message %s " %(payload))
-	    
+        
     elif payload == "147":
         vals = pins.readTemperature()
         LCDScreen.publish([20,"Temp:{:.1f},Humidity:{:.1f},DewPoint:{:.1f}".format(*vals)])
@@ -67,32 +67,57 @@ def dispatcherLoop( ):
     RFIDReader.readTag()
     saveRFID=False
     while True:
-	try:
-	    payload = q.get(True, 30)
-	    q.task_done()
-	    if payload[0] == const.EVENT_KEYS:
-                processKeyCodes( payload[1])
-	    elif payload[0] == const.EVENT_RFID_GETTAG:
-                logger.debug("tag received: %s " % payload(1))
-                if (saveRFID):
-                    db.addCard( payload(1))
-                    logger.info("tag saved: %s " % payload(1))
-                elif db.hasCard( payload(1)):
-                    pins.unlock()
-
-	    elif payload[0] == const.EVENT_TOUCHUP:
-	        LCD.displayDigit(payload[0])
-	    elif payload[0] == const.EVENT_TOUCHED:
-                logger.debug("touched received: %s " % payload(1))
-                if payload[1] & 15 == 15:
-                    # keys 0123 are pressed
-                    saveRFID=True
-                else:
-                    saveRFID=False
-
-	except Empty as e:
+        try:
+            payload = q.get(True, 30)
+            q.task_done()
+        except Empty as e:
             RFIDReader.readTag()
-	        
+            next
+        
+        # we have a task to do
+        if payload[0] == const.EVENT_KEYS:
+            #LCDScreen.displayClear()
+            processKeyCodes( payload[1])
+
+        elif payload[0] == const.EVENT_TOUCHUP:
+            LCDScreen.displayChar(payload[1])
+
+        elif payload[0] == const.EVENT_TOUCHDOWN:
+            pass
+
+        elif payload[0] == const.EVENT_RFID_HASTAG:
+            logger.debug("tag received: %s " % payload[1])
+            if (saveRFID):
+                db.addCard( payload[1])
+                logger.info("tag saved: %s " % payload[1])
+            elif db.hasCard( payload[1]):
+                pins.unlock()
+
+        elif payload[0] == const.EVENT_TOUCHED:
+            logger.debug("touched received: %s " % payload[1])
+            if payload[1] & 15 == 15:
+                # keys 0123 are pressed
+                saveRFID=True
+            else:
+                saveRFID=False
+
+        elif payload[0] == const.EVENT_PINON:
+            LCDScreen.display("WATER ZN %s" % payload[1] )
+
+        elif payload[0] == const.EVENT_PINOFF:
+            LCDScreen.display("STOP WATER ZN %s" % payload[1] )
+
+        elif payload[0] == const.EVENT_LOCKED:
+            LCDScreen.display("DOOR LOCKED " )
+
+        elif payload[0] == const.EVENT_UNLOCKED:
+            LCDScreen.display("DOOR UNLOCKED " )
+
+        else:
+            logger.info("Unknown event: %i " % payload[0])
+
+
+            
 
 if __name__ == "__main__":
 

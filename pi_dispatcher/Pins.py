@@ -4,13 +4,10 @@ from Queue import Queue
 from threading import Timer
 from functools import partial
 from sht1x.Sht1x import Sht1x as SHT1x
-
-
-#from blink1_pyusb import Blink1 as Blink1_pyusb
-#blink1 = Blink1_pyusb()
-
 import logging
 logger = logging.getLogger("dispatcher")
+
+import const
 
 wateringPins=(7,11,13,15)
 #wateringPins=(11,11,11,11)
@@ -64,9 +61,9 @@ class Pins:
             self.eventQueue.put([const.EVENT_PINOFF,pinIndex ])
 
     def disableAllPins(self ):
-        for pinIndex in wateringPins:
+        for pinIndex in range(len(wateringPins)):
             latestOffTime[ pinIndex ] = -1
-            self.GPIO_output(pinIndex, P.OFF)
+            self.GPIO_output(wateringPins[ pinIndex ], P.OFF)
 
 
     def water(self, n, duration=120):
@@ -105,6 +102,6 @@ def readTemp( ):
  
 GPIO.setmode(GPIO.BOARD)
 
-for pinIndex in wateringPins:
+for pinIndex in range(len(wateringPins)):
     latestOffTime[ pinIndex ] = -1
 
