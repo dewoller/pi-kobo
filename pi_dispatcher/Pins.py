@@ -47,7 +47,10 @@ class Pins:
         self.GPIO_output(wateringPins[ pinIndex ], P.ON)
         Timer(duration, self.disablePin, [ pinIndex ]).start()
         latestOffTime[ pinIndex ] = max( latestOffTime[ pinIndex ], time.time() + duration)
-        self.eventQueue.put([const.EVENT_PINON,pinIndex])
+        if pinIndex == lockPinIndex:
+            self.eventQueue.put([const.EVENT_UNLOCKED,pinIndex])
+        else:
+            self.eventQueue.put([const.EVENT_PINON,pinIndex])
 
 
     def disablePin(self,  pinIndex):
@@ -55,6 +58,9 @@ class Pins:
 
         if latestOffTime[ pinIndex ]-1 <= time.time():
             self.GPIO_output(wateringPins[ pinIndex ], P.OFF)
+        if pinIndex == lockPinIndex:
+            self.eventQueue.put([const.EVENT_LOCKED,pinIndex])
+        else:
             self.eventQueue.put([const.EVENT_PINOFF,pinIndex ])
 
     def disableAllPins(self ):
