@@ -14,7 +14,7 @@ logger = logging.getLogger("dispatcher")
 
 wateringPins=(7,11,13,15)
 #wateringPins=(11,11,11,11)
-lockPinIndex=3;
+lockPinIndex=0;
 latestOffTime=dict()
 
 try:
@@ -34,37 +34,40 @@ class P():
    
 
 class Pins:
-    def __init__(self):
-        pass
+    def __init__(self, eventQueue):
+        # need eventQueue because we want to be able to pass messages back, eg saying when done
+        self.eventQueue = eventQueue
 
     def GPIO_output( self, pin, what):
         logger.info( "setting pin {} to state {} ".format( pin, what))
         GPIO.setup(pin, GPIO.OUT)
         GPIO.output(pin, what)
 
-    def enablePin( self, n, duration=20):
-        wateringPin = wateringPins[n]
-        self.GPIO_output(wateringPin, P.ON)
-        Timer(duration, self.disablePin, [ wateringPin ]).start()
-        latestOffTime[ wateringPin ] = max( latestOffTime[ wateringPin ], time.time() + duration)
+    def enablePin( self, pinIndex, duration=20):
+        self.GPIO_output(wateringPins[ pinIndex ], P.ON)
+        Timer(duration, self.disablePin, [ pinIndex ]).start()
+        latestOffTime[ pinIndex ] = max( latestOffTime[ pinIndex ], time.time() + duration)
+        self.eventQueue.put([const.EVENT_PINON,pinIndex])
 
 
-    def disablePin(self,  wateringPin):
-        logger.debug( "latestoff {} compared to time {} , pin {}".format( latestOffTime[ wateringPin ],time.time(), wateringPin))
+    def disablePin(self,  pinIndex):
+        logger.debug( "latestoff {} compared to time {} , pin {}".format( latestOffTime[ pinIndex ],time.time(), pinIndex))
 
-	if latestOffTime[ wateringPin ]-1 <= time.time():
-	    self.GPIO_output(wateringPin, P.OFF)
+        if latestOffTime[ pinIndex ]-1 <= time.time():
+            self.GPIO_output(wateringPins[ pinIndex ], P.OFF)
+            self.eventQueue.put([const.EVENT_PINOFF,pinIndex ])
 
     def disableAllPins(self ):
-        for wateringPin in wateringPins:
-            latestOffTime[ wateringPin ] = -1
-            self.GPIO_output(wateringPin, P.OFF)
+        for pinIndex in wateringPins:
+            latestOffTime[ pinIndex ] = -1
+            self.GPIO_output(pinIndex, P.OFF)
 
 
     def water(self, n, duration=120):
-        if (n<4 ) &  (n>0): # error checking
+        # 0'th pin is lock mechanism, pins 1..3 are 
+        if (n<4) & (n>0): # error checking
 	    # subtract 1 because pins number from 1-3, and the fourth pin is for the lock mechanism
-            self.enablePin(n-1, duration)
+            self.enablePin(n, duration)
         else:
             logger.debug( "Invalid watering pin %s " %( n ))
 	    
@@ -96,6 +99,6 @@ def readTemp( ):
  
 GPIO.setmode(GPIO.BOARD)
 
-for wateringPin in wateringPins:
-    latestOffTime[ wateringPin ] = -1
+for pinIndex in wateringPins:
+    latestOffTime[ pinIndex ] = -1
 
