@@ -35,11 +35,15 @@ songs = [
 class Music():
     def __init__(self):
         pass
-    def playSong( self, song ):
+    def playSong( self, songIndex ):
+        Timer(duration, self.playSongInBackground, [ songIndex ]).start()
+
+    def playSongInBackground( self, songIndex ):
         GPIO.setup(12, GPIO.OUT)
         pin = GPIO.PWM(12, 5000)  # channel=12 frequency=50Hz
         pin.start(0)
-        self.playNotes(pin, songs[ song ])
+        self.playNotes(pin, songs[ songIndex ])
+        pin.changeDutyCycle(0)
             
     def playNotes( self, pin, song ):
         for note in zip( song[0], song[1]):

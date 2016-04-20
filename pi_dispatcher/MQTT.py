@@ -16,8 +16,8 @@ class MQTT:
         self.serverIP =  serverIP
         self.logger = logging.getLogger(clientID + ".MQTT")
         self.eventQueue = eventQueue
-	self.inTopic = inTopic
-	self.outTopic = outTopic
+        self.inTopic = inTopic
+        self.outTopic = outTopic
         self.client = mosquitto.Mosquitto(clientID)
         self.socketError = False
         self.connect()
@@ -27,28 +27,28 @@ class MQTT:
         self.t.start()
 
     def connect(self):
-	def on_message(obj, userdata, msg):
-	    self.logger.info("Message received on topic "+msg.topic+" with QoS "+str(msg.qos)+" and payload "+msg.payload)
+        def on_message(obj, userdata, msg):
+            self.logger.info("Message received on topic "+msg.topic+" with QoS "+str(msg.qos)+" and payload "+msg.payload)
             event = string.split(msg.payload, "|")
-	    self.eventQueue.put(event);
-	    
-	def on_disconnect(mosq, obj, rc):
-	    if (rc==1):
-		self.logger.info("Disconnection unexpected")
-		self.connect()
+            self.eventQueue.put(event);
+            
+        def on_disconnect(mosq, obj, rc):
+            if (rc==1):
+                self.logger.info("Disconnection unexpected")
+                self.connect()
 
-	def on_publish(obj, other, msg ):
-	    self.logger.info( "completed publish %s " %( msg))
+        def on_publish(obj, other, msg ):
+            self.logger.info( "completed publish %s " %( msg))
 
         retry=True
         while ( retry ):
             try:
                 self.client.connect(self.serverIP)  # pi
                 self.client.subscribe(self.inTopic, 0)
-	        self.logger.info("Connecting, subscribing to topic %s" % (self.inTopic))
+                self.logger.info("Connecting, subscribing to topic %s" % (self.inTopic))
                 self.client.on_message = on_message
                 self.client.on_disconnect = on_disconnect
-		self.client.on_publish = on_publish
+                self.client.on_publish = on_publish
                 retry=False
             except socket_error:
                 retry =  True
@@ -56,27 +56,27 @@ class MQTT:
                 self.logger.info("Retrying MQTT connect")
                 time.sleep(5)
 
-	self.socketError = False 
+        self.socketError = False 
                 
     def publish(self, topic, msg):
-	self.logger.info("Publishing msg %s with topic %s" %  (msg, topic))
+        self.logger.info("Publishing msg %s with topic %s" %  (msg, topic))
         try:
-	    self.client.publish(topic,msg)
-	except socket_error:
+            self.client.publish(topic,msg)
+        except socket_error:
             self.eventQueue.put([const.EVENT_FLASHMSG,"socket error"])
-	    self.socketError = True
-	    self.logger.info("Socket error when trying to publish %s" % (msg) )
-	    self.logger.info("Socket Error Flag = %s" % (self.socketError))
+            self.socketError = True
+            self.logger.info("Socket error when trying to publish %s" % (msg) )
+            self.logger.info("Socket Error Flag = %s" % (self.socketError))
 
-	    
+            
 
 
     def loop( self ):
         while True:
-	    if self.socketError:
-		self.logger.debug("Socket Error Flag = %s in Loop" % (self.socketError))
-		self.connect()	
-		
+            if self.socketError:
+                self.logger.debug("Socket Error Flag = %s in Loop" % (self.socketError))
+                self.connect()        
+                
             self.client.loop()
             time.sleep(2)
 
