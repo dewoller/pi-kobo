@@ -49,6 +49,7 @@ class RFID():
         self.resetRFID()
         time.sleep(.1)
         self.readTag()
+        self.currentWritePort = 0
         thread.start_new_thread(self.reader, (eventQueue, ))
     
     def prepareRFID( self, eventQueue ):
@@ -116,7 +117,15 @@ class RFID():
         self.send_command(sm130Code['ReadPort'])
 
     def writePort(self, value): 
-        self.send_command(sm130Code['WritePort'], value)
+        self.send_command(sm130Code['WritePort'], struct.pack("B",value))
+
+    def lightOn(self, whichLight): 
+        self.currentWritePort = self.currentWritePort | 1 << whichLight
+        self.writePort( self.currentWritePort )
+
+    def lightOff(self, whichLight): 
+        self.currentWritePort = self.currentWritePort & (~ (1 << whichLight ))
+        self.writePort( self.currentWritePort )
 
     def haltTag(self): 
         self.send_command(sm130Code['Halt'])

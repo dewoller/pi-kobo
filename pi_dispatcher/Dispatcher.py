@@ -34,9 +34,6 @@ def processKeyCodes( payload):
     logger.info("processing payload %s" % payload)
     if payload == "3695147" or payload == "6932147XY" :
         pins.unlock()
-        LCDScreen.publish([2, "Door Unlocked"] )
-        mqtt.publish("door", string.translate(payload, rot13))
-        music.play(1)
     elif payload == "369":
         pins.disableAllPins()
         LCDScreen.publish([5, "All Pins Off"] )
@@ -92,6 +89,8 @@ def dispatcherLoop( ):
                 logger.info("tag saved: %s " % payload[1])
             elif db.hasCard( payload[1]):
                 pins.unlock()
+            else:
+                displayError('Bad card')
 
         elif payload[0] == const.EVENT_TOUCHED:
             logger.debug("touched received: %s " % payload[1])
@@ -107,11 +106,17 @@ def dispatcherLoop( ):
         elif payload[0] == const.EVENT_PINOFF:
             LCDScreen.display("STOP WATER ZN %s" % payload[1] )
 
-        elif payload[0] == const.EVENT_LOCKED:
-            LCDScreen.display("DOOR LOCKED " )
-
         elif payload[0] == const.EVENT_UNLOCKED:
             LCDScreen.display("DOOR UNLOCKED " )
+            RFIDReader.lightOn(0)
+            music.playSong(1)
+            mqtt.publish("door", "unlocked")
+
+        elif payload[0] == const.EVENT_LOCKED:
+            LCDScreen.display("DOOR LOCKED " )
+            RFIDReader.lightOff(0)
+            music.stopPlay()
+
 
         else:
             logger.info("Unknown event: %i " % payload[0])
@@ -124,10 +129,10 @@ if __name__ == "__main__":
     logger = logging.getLogger('dispatcher')
     logger.setLevel(logging.DEBUG)
     ch = logging.StreamHandler(sys.stdout)
-    ch.setLevel(logging.DEBUG)
-    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-    ch.setFormatter(formatter)
-    logger.addHandler(ch)
+#    ch.setLevel(logging.DEBUG)
+#    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+#   ch.setFormatter(formatter)
+#    logger.addHandler(ch)
     dispatcherLoop()
 
     call(["sudo", "/usr/bin/allPinsOff"])

@@ -16,6 +16,7 @@ import time
 import const
 import thread, sys
 from i2clibraries import i2c_lcd_smbus
+from threading import Timer
 
 try:
     import RPi.GPIO as GPIO
@@ -34,19 +35,27 @@ songs = [
 
 class Music():
     def __init__(self):
-        pass
+        self.keepPlaying=False
     def playSong( self, songIndex ):
-        Timer(duration, self.playSongInBackground, [ songIndex ]).start()
+        self.keepPlaying=True
+        thread.start_new_thread(self.playSongInBackground, (songIndex, ))
+
+    def stopPlay( self ):
+        self.keepPlaying=False
 
     def playSongInBackground( self, songIndex ):
-        GPIO.setup(12, GPIO.OUT)
-        pin = GPIO.PWM(12, 5000)  # channel=12 frequency=50Hz
-        pin.start(0)
-        self.playNotes(pin, songs[ songIndex ])
-        pin.changeDutyCycle(0)
+        while self.keepPlaying:
+            GPIO.setup(12, GPIO.OUT)
+            pin = GPIO.PWM(12, 5000)  # channel=12 frequency=50Hz
+            pin.start(0)
+            self.playNotes(pin, songs[ songIndex ])
+            time.sleep(1)
+            self.keepPlaying=False
             
     def playNotes( self, pin, song ):
         for note in zip( song[0], song[1]):
+            if not self.keepPlaying:
+                break
             self.playNote(pin, note[0], note[1] )
 
     def playNote( self, pin, frequency, length ):
