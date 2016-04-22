@@ -63,45 +63,47 @@ class RFID():
             try:
                 eventName = sm130Val[ eventType ]
             except KeyError:
+                logger.debug("Key Error read from serial %s" % eventType)
                 continue
+
             if eventName == 'Firmware'  or eventName == 'Reset':
                 logger.info("Firmware: %s" % (payload))
                 self.readTag()  # our job is to always be reading tags
             elif eventName == 'Seek' :
-                if payload != '\x4c':
+                if payload != b'\x4c':
                     tag =encode2hex( payload )
                     logger.info("Real Tag: %s" % ( tag ))
                     eventQueue.put([const.EVENT_RFID_HASTAG,  tag ])
                     self.getNextTag()
+            elif (eventName == 'Halt') or (eventName == 'WritePort' ) :
+                time.sleep(.01)
+                self.readTag() # get back to reading tags
             else:
+                logger.info("Unhandled RFID event %s" % eventName)
                 self.readTag()  # dont care what happened, get back to reading tags
         
     def send_command(self, command, payload=''):
-        import pdb; pdb.set_trace()
         packet = build_packet(command, payload)
         self.ser.write(packet)
         logger.debug("Sent a packet %s" % encode2hex( packet ))
 
     def read_command(self ):
         header = ""
-        while header != "\xff":
+        while header != b"\xff":
             header = self.ser.read(1)
+        
         reserved, len, response_to = struct.unpack('BBB', self.ser.read(3))
         try:
-            assert header == '\xff'
-            assert reserved == 0x00
+            assert header == b'\xff'
+            assert reserved == 0  
             response = self.ser.read(len - 1)
-            response_checksum = self.ser.read(1)
+            response_checksum = struct.unpack("B", self.ser.read(1)) [0]
             computed_checksum = build_packet(response_to, response)[-1]
             assert computed_checksum == response_checksum
         except AssertionError:
-            logging.info("Serial read error")
+            logger.info("Serial read error")
             return ("","")
         return (response_to, response)
-
-
-    def hexput(self, str):
-        self.ser.write( str.decode("hex"))
 
     def getFirmwareVersion(self): 
         self.send_command(sm130Code['Firmware'])
@@ -112,8 +114,6 @@ class RFID():
     def getNextTag(self): 
         time.sleep(.01)
         self.haltTag()
-        time.sleep(.01)
-        self.readTag()
     
     def readTag(self): 
         self.send_command(sm130Code['Seek'])
@@ -155,18 +155,15 @@ def main( ):
     q=queue.Queue()
     sc = RFID(q)
     while True:
-#EVENT_RFID_READPORT             = "25"
-#EVENT_RFID_WRITEPORT            = "26"
         logger.debug("getting Firmware")
         sc.getFirmwareVersion()
         time.sleep(1)   # check for timeout
         logger.debug("getting Tag")
         sc.readTag()
         time.sleep(10)
-        import pdb; pdb.set_trace()
         for i in range(4):
             logger.debug("Writing Port with %s" % i )
-            sc.writePort( bytes(chr(i) ))
+            sc.writePort( i )
             time.sleep(.1)
     
 if __name__ == '__main__':

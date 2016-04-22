@@ -17,7 +17,7 @@ from threading import Timer
 import queue
 import requests
 from dateutil import parser
-import datetime
+from datetime import datetime, timezone
 
 nextTrainParams = dict(
     stopId=10001168,
@@ -36,7 +36,7 @@ class webConnect():
         self.eventQueue = eventQueue
         self.scheduleNextNotification()
     
-    def getTrains( self ):
+    def getNextTrains( self ):
         rv = []
         trainsJSON = requests.get( url=nextTrainURL, params=nextTrainParams ).json()
         for train in trainsJSON['values']:
@@ -44,33 +44,36 @@ class webConnect():
                  rv.append( parser.parse(train['time_timetable_utc']) )
         return rv
 
-
-
     # continuiously runs, reading and posting tags on event queue
     def scheduleNextNotification( self ):
         if len(self.nextTrains) == 0:
-            self.getTrains()
+            self.getNextTrains()
         nextTrain = self.nextTrains[0]
         tm = datetime.now( timezone.utc )
         if nextTrain < tm:
             # past by
             self.nextTrains.pop(0)
             return( self.scheduleNextNotification() )
-        secondsRemaining = tm < nextTrain
+        secondsRemaining = (nextTrain - tm ).seconds
         minutesRemaining = round( secondsRemaining / 60, 0 )
         if minutesRemaining<= 7: 
-            eventQueue.put([const.EVENT_NEXTTRAIN,  minutesRemaining ])
+            self.eventQueue.put([const.EVENT_NEXTTRAIN,  minutesRemaining ])
             if minutesRemaining<=1:
                 self.nextTrains.pop(0)
                 return( self.scheduleNextNotification() )
-            secsUntilNextEvent = 60
+            secsUntilNextEvent = 55
         else:
             secsUntilNextEvent = max( 10, secondsRemaining - 420 )
-        Timer( secsUntilNextEvent, self.scheduleNextNotification)
+        Timer( secsUntilNextEvent, self.scheduleNextNotification).start()
+        logger.info('Next train notification in %i seconds' % secsUntilNextEvent )
         
 
 def main( ):
     q=queue.Queue()
+    wc = webConnect(q)
+    print (wc.nextTrains)
+
+
     
 if __name__ == '__main__':
     main()

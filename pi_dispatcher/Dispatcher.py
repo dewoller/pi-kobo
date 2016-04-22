@@ -14,6 +14,7 @@ import Music
 import Keypad
 import RFID
 import db
+import webConnect
 
 q = queue.Queue()
 LCDScreen = LCD.LCD()
@@ -23,6 +24,7 @@ pins =Pins.Pins( q )
 keypad = Keypad.Keypad(q)
 music = Music.Music()
 RFIDReader = RFID.RFID(q)
+webConnection = webConnect.webConnect(q)
 
 
 def processKeyCodes( payload):
@@ -105,13 +107,15 @@ def dispatcherLoop( ):
         elif payload[0] == const.EVENT_UNLOCKED:
             LCDScreen.display("DOOR UNLOCKED " )
             RFIDReader.lightOn(0)
-            music.playSong(1)
+            music.playSong("long")
             mqtt.publish("door", "unlocked")
 
         elif payload[0] == const.EVENT_LOCKED:
             LCDScreen.display("DOOR LOCKED " )
             RFIDReader.lightOff(0)
             music.stopPlay()
+        elif payload[0] == const.EVENT_NEXTTRAIN:
+            LCDScreen.display("NEXT TRAIN IN \n%s MINUTES" % payload[1] )
         else:
             logger.info("Unknown event: %s " % payload[0])
 

@@ -24,11 +24,15 @@ except RuntimeError:
 
 GPIO.setmode(GPIO.BOARD)
 
-songs = [
-    ([392,294,0,392,294,0,392,0,392,392,392,0,1047,262], [0.2,0.2,0.2,0.2,0.2,0.2,0.1,0.1,0.1,0.1,0.1,0.1,0.8,0.4]),
-    ([262,330,392,523,1047], [0.2,0.2,0.2,0.2,0.2,0,5]),
-    ([262,294,330,349,392,440,494,523, 587, 659,698,784,880,988,1047], [.1, .1, .1, .1, .1, .1, .1, .1, .1, .1, .1, .1, .1, .1, .1, .1, .1])
-    ]
+songs = dict(
+    long=([392,294,0,392,294,0,392,0,392,392,392,0,1047,262], [0.2,0.2,0.2,0.2,0.2,0.2,0.1,0.1,0.1,0.1,0.1,0.1,0.8,0.4]),
+    short=([262,330,392,523,1047], [0.2,0.2,0.2,0.2,0.2,0,5]),
+    nice=([262,294,330,349,392,440,494,523, 587, 659,698,784,880,988,1047], [.1, .1, .1, .1, .1, .1, .1, .1, .1, .1, .1, .1, .1, .1, .1, .1, .1])
+)    
+
+# 2700 - loud and annoying
+for i in range(7):
+    songs[ "beeps%i" % i] = ([2700]*(i+1), [.1]*(i+1))
 
 
 class Music():
@@ -36,7 +40,7 @@ class Music():
         self.keepPlaying=False
     def playSong( self, songIndex ):
         self.keepPlaying=True
-        thread.start_new_thread(self.playSongInBackground, (songIndex, ))
+        _thread.start_new_thread(self.playSongInBackground, (songIndex, ))
 
     def stopPlay( self ):
         self.keepPlaying=False
@@ -67,11 +71,14 @@ class Music():
 def main( ):
     sc = Music()
     while True:
-        sc.playSong(0)
+        for i in range(7):
+            sc.playSong( "beeps%i" % i) 
+            time.sleep(3)
+        sc.playSong('first')
         time.sleep(10)
-        sc.playSong(1)
+        sc.playSong('short')
         time.sleep(10)
-        sc.playSong(2)
+        sc.playSong('nice')
         time.sleep(10)
     
 if __name__ == '__main__':
