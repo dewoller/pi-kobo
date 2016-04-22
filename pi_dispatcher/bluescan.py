@@ -4,7 +4,7 @@ import logging
 logger = logging.getLogger( "dispatcher.Bluescan")
 import subprocess
 
-from Queue import Queue, Empty
+import queue, Empty
 import thread
 
 validBluetoothId = [

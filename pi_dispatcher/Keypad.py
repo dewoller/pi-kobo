@@ -57,7 +57,7 @@ class Keypad():
                 logger.error(traceback.format_exc())
 
 def main( ):
-    from Queue import Queue
+    import queue
     q=Queue()
     sc = Keypad(q)
     while True:

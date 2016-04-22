@@ -1,5 +1,5 @@
 #!/usr/bin/python 
-from Queue import Queue, Empty
+import queue, Empty
 import sys
 from subprocess import call
 import logging
@@ -21,7 +21,7 @@ rot13 = string.maketrans(
 
 q = Queue()
 LCDScreen = LCD.LCD()
-mqtt = MQTT.MQTT(  "192.168.1.38", q, "newDispatcher", "dispatcher", "keypad" )
+mqtt = MQTT.MQTT(  "192.168.1.38", q, clientID="newDispatcher", inTopic="dispatcher", outTopic="keypad" )
 mqtt.publish("pi", "starting")
 pins =Pins.Pins( q )
 keypad = Keypad.Keypad(q)
@@ -51,7 +51,7 @@ def processKeyCodes( payload):
         
     elif payload == "147":
         vals = pins.readTemperature()
-        LCDScreen.publish([20,"Temp:{:.1f},Humidity:{:.1f},DewPoint:{:.1f}".format(*vals)])
+        LCDScreen.publish([20,"Temperature:{:.1f} \nHumidity:   {:.1f}%".format(*vals)])
         mqtt.publish("sensor1/temperature","{:.1f}".format(vals[0]))
         mqtt.publish("sensor1/humidity","{:.1f}".format(vals[1]))
         mqtt.publish("sensor1/dewpoint","{:.1f}".format(vals[2]))
@@ -69,7 +69,7 @@ def dispatcherLoop( ):
             q.task_done()
         except Empty as e:
             RFIDReader.readTag()
-            next
+            continue
         
         # we have a task to do
         if payload[0] == const.EVENT_KEYS:
@@ -116,10 +116,8 @@ def dispatcherLoop( ):
             LCDScreen.display("DOOR LOCKED " )
             RFIDReader.lightOff(0)
             music.stopPlay()
-
-
         else:
-            logger.info("Unknown event: %i " % payload[0])
+            logger.info("Unknown event: %s " % payload[0])
 
 
             

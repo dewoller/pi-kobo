@@ -15,7 +15,7 @@ import const
 import thread, sys, struct
 from threading import Timer
 import serial
-import Queue
+import queue
 
 sm130Code = {
     "Reset": 0x80,
@@ -59,7 +59,10 @@ class RFID():
     def reader( self, eventQueue ):
         while (True):
             (eventType, payload) = self.read_command( )
-            eventName = sm130Val[ eventType ]
+            try:
+                eventName = sm130Val[ eventType ]
+            except KeyError:
+                continue
             if eventName == 'Firmware'  or eventName == 'Reset':
                 logger.info("Firmware: %s" % (payload))
                 self.readTag()  # our job is to always be reading tags

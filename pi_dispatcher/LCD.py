@@ -13,7 +13,7 @@ if __name__ == '__main__' and __package__ is None:
     logger.addHandler(ch)
 
 import time
-from Queue import Queue
+import queue
 import const
 import thread, sys
 from threading import Timer
@@ -61,8 +61,14 @@ class LCD():
     def display( self, message ):
         self.prepareWrite()
         self.displayClear()
-        self.displayLine1(message[:16])
-        self.displayLine2(message[17:])
+        if "\n" in message:
+            (ln1, ln2) =message.split("\n")
+        else:
+            ln1=message[:16]
+            ln2=message[17:]
+
+        self.displayLine1(ln1)
+        self.displayLine2(ln2)
 
     def displayLine1( self, message) :
         self.pos=0

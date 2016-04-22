@@ -1,4 +1,4 @@
-EVENT_KEYS=0  
+EVENT_KEYS="0"   # because MQTT events come as strings
 EVENT_TOUCHED=1 
 EVENT_TOUCHUP=2
 EVENT_TOUCHDOWN=3 # intra keypad events

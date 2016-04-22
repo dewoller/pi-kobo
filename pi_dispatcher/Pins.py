@@ -1,6 +1,6 @@
 #!/bin/python 
 import time
-from Queue import Queue
+import queue
 from threading import Timer
 from functools import partial
 from sht1x.Sht1x import Sht1x as SHT1x
@@ -37,6 +37,7 @@ class Pins:
 
     def GPIO_output( self, pin, what):
         logger.info( "setting pin {} to state {} ".format( pin, what))
+        GPIO.setmode(GPIO.BOARD)
         GPIO.setup(pin, GPIO.OUT)
         GPIO.output(pin, what)
 
