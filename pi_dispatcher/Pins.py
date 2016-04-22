@@ -9,7 +9,7 @@ logger = logging.getLogger("dispatcher")
 
 import const
 
-wateringPins=(7,11,13,15)
+wateringPins=(7,16,13,15)
 #wateringPins=(11,11,11,11)
 lockPinIndex=0;
 latestOffTime=dict()
