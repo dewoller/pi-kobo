@@ -16,21 +16,21 @@ validBluetoothId = [
 
 class bluescan():
     def __init__(self, eventQueue):
-	thread.start_new_thread(self.main, (eventQueue, ))
+    thread.start_new_thread(self.main, (eventQueue, ))
 
     def main( self, eventQueue ):
-	while (True):
-	    result = ""
-	    for id in validBluetoothId:
-		startTime = time.time()
+    while (True):
+        result = ""
+        for id in validBluetoothId:
+        startTime = time.time()
                 #logger.debug( "Searching for Bluetooth {}".format(id))
-		result = subprocess.check_output(["/usr/bin/hcitool", "name",id]).strip("\r\n")
+        result = subprocess.check_output(["/usr/bin/hcitool", "name",id]).strip("\r\n")
                 #logger.debug( "finished searching {}, poll took {} seconds".format(id, time.time()-startTime))
-		if (result !=""):
-		    logger.debug( "FOUND device {}".format(result))
-		    eventQueue.put([const.EVENT_BLUEDEVICE, result])
-		    time.sleep(20)
-		    break
-	    time.sleep(.1)
+        if (result !=""):
+            logger.debug( "FOUND device {}".format(result))
+            eventQueue.put([const.EVENT_BLUEDEVICE, result])
+            time.sleep(20)
+            break
+        time.sleep(.1)
 
 

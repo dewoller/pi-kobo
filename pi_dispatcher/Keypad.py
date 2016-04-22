@@ -12,7 +12,7 @@ if __name__ == '__main__' and __package__ is None:
 
 import time, sys
 import const
-import thread, sys
+import _thread, sys
 import Adafruit_MPR121.MPR121 as MPR121
 
 keymap=['X','7','4','1','Y','8','5','2','Z','9','6','3']
@@ -23,13 +23,13 @@ class Keypad():
         self.cap = MPR121.MPR121()
 
         if not self.cap.begin():
-            print 'Error initializing MPR121.  Check your wiring!'
-        thread.start_new_thread(self.main, (eventQueue, ))
+            print( 'Error initializing MPR121.  Check your wiring!')
+        _thread.start_new_thread(self.main, (eventQueue, ))
 
     def main( self, eventQueue ):
         result=''
         last_touched=0
-	while (True):
+    while (True):
             try:
                 current_touched = self.cap.touched()
                 if current_touched<> last_touched:

@@ -12,9 +12,7 @@ if __name__ == '__main__' and __package__ is None:
 
 import time
 import const
-import thread, sys, struct
-from threading import Timer
-import serial
+import _thread, struct
 import queue
 
 sm130Code = {
@@ -50,7 +48,7 @@ class RFID():
         time.sleep(.1)
         self.readTag()
         self.currentWritePort = 0
-        thread.start_new_thread(self.reader, (eventQueue, ))
+        _thread.start_new_thread(self.reader, (eventQueue, ))
     
     def prepareRFID( self, eventQueue ):
         eventQueue.task_done()

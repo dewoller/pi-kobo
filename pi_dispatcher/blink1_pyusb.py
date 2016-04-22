@@ -36,7 +36,7 @@ class Blink1:
 
     def __init__(self):
         self.dev = None
-	self.blinkDev = self.find()
+    self.blinkDev = self.find()
         return self.blinkDev
     
     def find(self):
@@ -156,22 +156,22 @@ class Blink1:
         thread.start_new_thread(self.sustainBlink, (duration, ))
 
     def sustainBlink( self, duration):
-	fade=50
-	on=1000.0
-	off=00.0
-	cycles=duration / (((fade*2/1000)+on+off)/1000.0)
-	print cycles
+    fade=50
+    on=1000.0
+    off=00.0
+    cycles=duration / (((fade*2/1000)+on+off)/1000.0)
+    print cycles
     
         rgb1 = (0,255,0)
         rgb2 = (0,0,255)
         rgb3 = (0,255,255)
         for i in range(0,int(cycles)):
-	    if (i%3 == 1):
-		rgb=rgb1
-	    elif (i%3==2):
-		rgb=rgb2
-	    else:
-		rgb=rgb3
+        if (i%3 == 1):
+        rgb=rgb1
+        elif (i%3==2):
+        rgb=rgb2
+        else:
+        rgb=rgb3
             self.fade_to_rgbn( fade, rgb[0],rgb[1],rgb[2], 0)
             time.sleep( on / 1000.0)
             self.fade_to_rgbn( fade, 0,0,0, 0)

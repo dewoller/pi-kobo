@@ -15,7 +15,6 @@ if __name__ == '__main__' and __package__ is None:
 import time
 import queue
 import const
-import thread, sys
 from threading import Timer
 from i2clibraries import i2c_lcd_smbus
 timeout = 10

@@ -1,5 +1,5 @@
 #!/usr/bin/python 
-import queue, Empty
+import queue
 import sys
 from subprocess import call
 import logging
@@ -67,7 +67,7 @@ def dispatcherLoop( ):
         try:
             payload = q.get(True, 30)
             q.task_done()
-        except Empty as e:
+        except queue.Empty as e:
             RFIDReader.readTag()
             continue
         

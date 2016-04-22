@@ -70,11 +70,11 @@ class Pins:
     def water(self, n, duration=120):
         # 0'th pin is lock mechanism, pins 1..3 are 
         if (n<4) & (n>0): # error checking
-	    # subtract 1 because pins number from 1-3, and the fourth pin is for the lock mechanism
+        # subtract 1 because pins number from 1-3, and the fourth pin is for the lock mechanism
             self.enablePin(n, duration)
         else:
             logger.debug( "Invalid watering pin %s " %( n ))
-	    
+        
 
     def unlock(self, nseconds=8):
         self.enablePin(lockPinIndex, nseconds)
