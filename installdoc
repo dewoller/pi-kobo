@@ -7,9 +7,18 @@
     sudo wget http://repo.mosquitto.org/debian/mosquitto-jessie.list
 
 
-apt-get install build-essential python pip python.2.7-dev 
+apt-get install build-essential 
+python pip python.2.7-dev 
 agi mosquitto python-mosquitto mosquitto-clients
 agi python-serial bluez python-daemon
+
+agi python3 python3-pip libffi-dev \
+	python3-mosquitto sqlite3 rlwrap wiringpi  \
+	i2ctools locate python3-serial \
+	python3-daemon
+
+
+mosquitto
 
 #add user to dialout group
 
@@ -19,6 +28,10 @@ cpan Net:SSLeay
 cpan Forecast::IO
 
 
-sudo pip install rpiSht1x
+sudo pip3 install rpiSht1x smbus-cffi
+
+
+
+sudo python3 setup.py install
 
 

@@ -15,11 +15,7 @@ import Keypad
 import RFID
 import db
 
-rot13 = string.maketrans( 
-    "ABCDEFGHIJKLMabcdefghijklmNOPQRSTUVWXYZnopqrstuvwxyz", 
-    "NOPQRSTUVWXYZnopqrstuvwxyzABCDEFGHIJKLMabcdefghijklm")
-
-q = Queue()
+q = queue.Queue()
 LCDScreen = LCD.LCD()
 mqtt = MQTT.MQTT(  "192.168.1.38", q, clientID="newDispatcher", inTopic="dispatcher", outTopic="keypad" )
 mqtt.publish("pi", "starting")

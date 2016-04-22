@@ -14,6 +14,7 @@ import time
 import const
 import _thread, struct
 import queue
+import serial
 
 sm130Code = {
     "Reset": 0x80,
@@ -39,6 +40,8 @@ sm130Code = {
 
 sm130Val = dict([[v,k] for k,v in sm130Code.items()])
 
+def encode2hex( packet ):
+    return( ''.join(format(x, '02x') for x in packet) )
 
 class RFID():
     def __init__(self, eventQueue):
@@ -65,8 +68,8 @@ class RFID():
                 logger.info("Firmware: %s" % (payload))
                 self.readTag()  # our job is to always be reading tags
             elif eventName == 'Seek' :
-                if payload <> '\x4c':
-                    tag =payload.encode("hex") 
+                if payload != '\x4c':
+                    tag =encode2hex( payload )
                     logger.info("Real Tag: %s" % ( tag ))
                     eventQueue.put([const.EVENT_RFID_HASTAG,  tag ])
                     self.getNextTag()
@@ -74,13 +77,14 @@ class RFID():
                 self.readTag()  # dont care what happened, get back to reading tags
         
     def send_command(self, command, payload=''):
+        import pdb; pdb.set_trace()
         packet = build_packet(command, payload)
         self.ser.write(packet)
-        logger.debug("Sent a packet %s" % packet.encode('hex'))
+        logger.debug("Sent a packet %s" % encode2hex( packet ))
 
     def read_command(self ):
         header = ""
-        while header <> "\xff":
+        while header != "\xff":
             header = self.ser.read(1)
         reserved, len, response_to = struct.unpack('BBB', self.ser.read(3))
         try:
@@ -135,19 +139,20 @@ def getSerial(dev="/dev/ttyAMA0", baudrate=19200, timeout=.1):
     return( serial.Serial(dev, 19200, timeout=timeout))
 
 def sm130_checksum(packet):
-    return sum(ord(x) for x in packet) % 256
+    return sum(x for x in packet) % 256
 
 def build_packet(command, payload):
     packet = struct.pack('BBB', 0x00, len(payload) + 1, command)
-    packet += payload
-    packet = '\xff' + packet + struct.pack('B', sm130_checksum(packet))
+    if len(payload) > 0:
+        packet += payload
+    packet = b'\xff' + packet + struct.pack('B', sm130_checksum(packet))
     return packet
 
 def bits( number ):
      return [int(i) for i in list(bin(number)[2:])]
 
 def main( ):
-    q=Queue.Queue()
+    q=queue.Queue()
     sc = RFID(q)
     while True:
 #EVENT_RFID_READPORT             = "25"
@@ -158,7 +163,7 @@ def main( ):
         logger.debug("getting Tag")
         sc.readTag()
         time.sleep(10)
-    
+        import pdb; pdb.set_trace()
         for i in range(4):
             logger.debug("Writing Port with %s" % i )
             sc.writePort( bytes(chr(i) ))

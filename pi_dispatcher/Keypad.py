@@ -29,36 +29,36 @@ class Keypad():
     def main( self, eventQueue ):
         result=''
         last_touched=0
-    while (True):
-            try:
-                current_touched = self.cap.touched()
-                if current_touched<> last_touched:
-                    eventQueue.put([const.EVENT_TOUCHED,  current_touched])
-                for i in range(12):
-                    pin_bit = 1 << i
-                    key=keymap[i]
-                    if current_touched & pin_bit and not last_touched & pin_bit:
-                        eventQueue.put([const.EVENT_TOUCHDOWN,  key])
-                    if not current_touched & pin_bit and last_touched & pin_bit:
-                        eventQueue.put([const.EVENT_TOUCHUP,  key])
-                        if key=='Z':
-                            if result <> '':
-                                eventQueue.put([const.EVENT_KEYS,  result])
-                            result=""
-                        else:
-                            result = result + key
-                        logger.debug( "key pressed %s, current result %s" % (key, result) )
-                last_touched = current_touched
-                time.sleep(.01)
-            except KeyboardInterrupt:
-                System.exit(0)
-            except Exception:
-                logger.error( "Other error:")
-                logger.error(traceback.format_exc())
+        while (True):
+                try:
+                    current_touched = self.cap.touched()
+                    if current_touched!=last_touched:
+                        eventQueue.put([const.EVENT_TOUCHED,  current_touched])
+                    for i in range(12):
+                        pin_bit = 1 << i
+                        key=keymap[i]
+                        if current_touched & pin_bit and not last_touched & pin_bit:
+                            eventQueue.put([const.EVENT_TOUCHDOWN,  key])
+                        if not current_touched & pin_bit and last_touched & pin_bit:
+                            eventQueue.put([const.EVENT_TOUCHUP,  key])
+                            if key=='Z':
+                                if result != '':
+                                    eventQueue.put([const.EVENT_KEYS,  result])
+                                result=""
+                            else:
+                                result = result + key
+                            logger.debug( "key pressed %s, current result %s" % (key, result) )
+                    last_touched = current_touched
+                    time.sleep(.01)
+                except KeyboardInterrupt:
+                    System.exit(0)
+                except Exception:
+                    logger.error( "Other error:")
+                    logger.error(traceback.format_exc())
 
 def main( ):
     import queue
-    q=Queue()
+    q = queue.Queue()
     sc = Keypad(q)
     while True:
         logger.info( "about to get keys" )
