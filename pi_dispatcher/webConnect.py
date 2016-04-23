@@ -2,14 +2,7 @@
 #!/bin/python 
 
 import logging, traceback, sys
-logger = logging.getLogger( "dispatcher.webConnect")
-if __name__ == '__main__' and __package__ is None:
-    logger.setLevel(logging.DEBUG)
-    ch = logging.StreamHandler(sys.stdout)
-    ch.setLevel(logging.DEBUG)
-    formatter = logging.Formatter('%(levelname)s - %(message)s')
-    ch.setFormatter(formatter)
-    logger.addHandler(ch)
+logger = logging.getLogger(__name__)
 
 import time
 import const
@@ -77,6 +70,12 @@ def main( ):
 
     
 if __name__ == '__main__':
+    logger.setLevel(logging.DEBUG)
+    ch = logging.StreamHandler(sys.stdout)
+    ch.setLevel(logging.DEBUG)
+    formatter = logging.Formatter('%(levelname)s - %(message)s')
+    ch.setFormatter(formatter)
+    logger.addHandler(ch)
     main()
 
 

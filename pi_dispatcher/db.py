@@ -2,7 +2,8 @@
 import sqlite3
 import os.path
 
-
+import logging
+logger = logging.getLogger(__name__)
 sqlite_file = 'doorUnlocker.sqlite'    # name of the sqlite database file
 def getCursor():
     # Connecting to the database file

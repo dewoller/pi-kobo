@@ -2,9 +2,12 @@
 import queue
 import sys
 from subprocess import call
-import logging
 import string
-logger = logging.getLogger("dispatcher" )
+
+import logging
+from logsetup import configure_log
+configure_log(logging.DEBUG,__name__)
+logger=logging.getLogger( __name__ )
 
 import const
 import MQTT
@@ -59,7 +62,18 @@ def processKeyCodes( payload):
 
 
 
+def startDispatcher( ):
+    logger.debug("inside dispatcherloop")
+    while True:
+        try:
+            dispatcherLoop()
+        except (SystemExit, KeyboardInterrupt):
+            raise
+        except Exception:
+            logger.error('Some error, capture it and continue', exc_info=True)
+
 def dispatcherLoop( ):
+    logger.debug("inside dispatcherloop")
     RFIDReader.readTag()
     saveRFID=False
     while True:
@@ -126,14 +140,7 @@ def dispatcherLoop( ):
 
 if __name__ == "__main__":
 
-    logger = logging.getLogger('dispatcher')
-    logger.setLevel(logging.DEBUG)
-    ch = logging.StreamHandler(sys.stdout)
-#    ch.setLevel(logging.DEBUG)
-#    formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-#   ch.setFormatter(formatter)
-#    logger.addHandler(ch)
-    dispatcherLoop()
+    startDispatcher()
 
     call(["sudo", "/usr/bin/allPinsOff"])
     pins.cleanup()

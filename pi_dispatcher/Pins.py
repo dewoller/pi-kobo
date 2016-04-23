@@ -5,8 +5,7 @@ from threading import Timer
 from functools import partial
 from sht1x.Sht1x import Sht1x as SHT1x
 import logging
-logger = logging.getLogger("dispatcher")
-
+logger = logging.getLogger(__name__)
 import const
 
 wateringPins=(7,16,13,15)

@@ -1,7 +1,7 @@
 #!/bin/python 
 
 import logging, traceback
-logger = logging.getLogger( "dispatcher.keys")
+logger = logging.getLogger(__name__)
 if __name__ == '__main__' and __package__ is None:
     import sys
     logger.setLevel(logging.DEBUG)

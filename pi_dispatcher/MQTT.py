@@ -3,6 +3,7 @@ import mosquitto
 import time
 from socket import error as socket_error
 import logging
+logger = logging.getLogger(__name__)
 import string
 import const
 
