@@ -81,4 +81,12 @@ class MQTT:
             self.client.loop()
             time.sleep(2)
 
-    
+   
+if __name__ == "main":
+    q = queue.Queue()
+    logger.INFO('starting')
+    mqtt = MQTT(  "127.0.0.1", q, clientID="dispatcher", inTopic="dispatcher", outTopic="keypad" )
+    mqtt.publish( 'dispatcher', 'test')
+    payload = q.get(True, 300)
+    q.task_done()
+    print(payload)
