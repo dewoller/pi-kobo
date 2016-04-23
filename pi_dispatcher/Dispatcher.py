@@ -7,7 +7,7 @@ import string
 import logging
 from logsetup import configure_log
 configure_log(logging.DEBUG,__name__)
-logger=logging.getLogger( __name__ )
+logger=logging.getLogger( "Dispatcher" )
 
 import const
 import MQTT
@@ -21,7 +21,7 @@ import webConnect
 
 q = queue.Queue()
 LCDScreen = LCD.LCD()
-mqtt = MQTT.MQTT(  "192.168.1.38", q, clientID="newDispatcher", inTopic="dispatcher", outTopic="keypad" )
+mqtt = MQTT.MQTT(  "192.168.1.38", q, clientID="Dispatcher", inTopic="dispatcher", outTopic="keypad" )
 mqtt.publish("pi", "starting")
 pins =Pins.Pins( q )
 keypad = Keypad.Keypad(q)
@@ -78,10 +78,10 @@ def dispatcherLoop( ):
     saveRFID=False
     while True:
         try:
-            payload = q.get(True, 30)
+            payload = q.get(True, 300)
             q.task_done()
         except queue.Empty as e:
-            RFIDReader.readTag()
+            RFIDReader.readTag()   # maybe we have forgotten that we need to be reading tags
             continue
         
         # we have a task to do
