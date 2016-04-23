@@ -3,6 +3,7 @@
 import logging, traceback
 logger = logging.getLogger( "dispatcher.keys")
 if __name__ == '__main__' and __package__ is None:
+    import sys
     logger.setLevel(logging.DEBUG)
     ch = logging.StreamHandler(sys.stdout)
     ch.setLevel(logging.DEBUG)

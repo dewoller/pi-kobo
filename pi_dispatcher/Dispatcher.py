@@ -58,6 +58,7 @@ def processKeyCodes( payload):
         logger.info( "incomprehensible message %s " %(payload))
 
 
+
 def dispatcherLoop( ):
     RFIDReader.readTag()
     saveRFID=False
@@ -75,7 +76,8 @@ def dispatcherLoop( ):
             processKeyCodes( payload[1])
 
         elif payload[0] == const.EVENT_TOUCHUP:
-            LCDScreen.displayChar(payload[1])
+            if payload[1] != 'Z':
+                LCDScreen.displayChar(payload[1])
 
         elif payload[0] == const.EVENT_TOUCHDOWN:
             pass
@@ -88,7 +90,7 @@ def dispatcherLoop( ):
             elif db.hasCard( payload[1]):
                 pins.unlock()
             else:
-                displayError('Bad card')
+                LCDScreen.publish([1, "I don't know that card"])
 
         elif payload[0] == const.EVENT_TOUCHED:
             logger.debug("touched received: %s " % payload[1])

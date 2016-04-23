@@ -164,7 +164,7 @@ def main( ):
         for i in range(4):
             logger.debug("Writing Port with %s" % i )
             sc.writePort( i )
-            time.sleep(.1)
+            time.sleep(5)
     
 if __name__ == '__main__':
     main()

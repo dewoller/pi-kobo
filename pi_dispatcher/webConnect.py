@@ -44,7 +44,8 @@ class webConnect():
                  rv.append( parser.parse(train['time_timetable_utc']) )
         return rv
 
-    # continuiously runs, reading and posting tags on event queue
+    # continuiously runs, reading and posting train notifications on event queue
+    # always ends with a Timer set to run again as needed
     def scheduleNextNotification( self ):
         if len(self.nextTrains) == 0:
             self.getNextTrains()
@@ -55,7 +56,7 @@ class webConnect():
             self.nextTrains.pop(0)
             return( self.scheduleNextNotification() )
         secondsRemaining = (nextTrain - tm ).seconds
-        minutesRemaining = round( secondsRemaining / 60, 0 )
+        minutesRemaining = secondsRemaining / 60
         if minutesRemaining<= 7: 
             self.eventQueue.put([const.EVENT_NEXTTRAIN,  minutesRemaining ])
             if minutesRemaining<=1:
