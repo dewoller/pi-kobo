@@ -1,16 +1,14 @@
 #!/bin/python
 import sqlite3
-import sys
+import os.path
 
 
 sqlite_file = 'doorUnlocker.sqlite'    # name of the sqlite database file
 def getCursor():
     # Connecting to the database file
-    try:
-        conn = sqlite3.connect(sqlite_file)
-    except: 
+    if not os.path.isfile( sqlite_file):
         createDatabase()
-        conn = sqlite3.connect(sqlite_file)
+    conn = sqlite3.connect(sqlite_file)
     c = conn.cursor()
     return (conn, c)
 
@@ -20,7 +18,8 @@ def closeCursor( conn ):
     conn.close()
 
 def createDatabase():
-    (conn, c ) =getCursor()
+    conn = sqlite3.connect(sqlite_file)
+    c = conn.cursor()
     c.execute('CREATE TABLE cards (card varchar(16) PRIMARY KEY)')
     closeCursor(conn)
 
