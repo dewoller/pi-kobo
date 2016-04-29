@@ -16,6 +16,7 @@ import const
 import _thread, sys
 import Adafruit_MPR121.MPR121 as MPR121
 
+#keymap=['X','7','4','1','Y','8','5','2','Z','9','6','3']
 keymap=['X','7','4','1','Y','8','5','2','Z','9','6','3']
 
 class Keypad():
@@ -43,8 +44,7 @@ class Keypad():
                         if not current_touched & pin_bit and last_touched & pin_bit:
                             eventQueue.put([const.EVENT_TOUCHUP,  key])
                             if key=='Z':
-                                if result != '':
-                                    eventQueue.put([const.EVENT_KEYS,  result])
+                                eventQueue.put([const.EVENT_KEYS,  result])
                                 result=""
                             else:
                                 result = result + key

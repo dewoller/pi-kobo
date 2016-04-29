@@ -33,22 +33,16 @@ class webConnect():
         rv = []
         trainsJSON = requests.get( url=nextTrainURL, params=nextTrainParams ).json()
         for train in trainsJSON['values']:
-             if train['platform']['direction']['direction_id']==1:
+             #print("Train %s dir %i" % (train['run']['destination_name'], train['platform']['direction']['direction_id']))
+             if train['platform']['direction']['direction_id']==0 and train['run']['destination_name'] == "Flinders Street":
                  rv.append( parser.parse(train['time_timetable_utc']) )
         return rv
 
     # continuiously runs, reading and posting train notifications on event queue
     # always ends with a Timer set to run again as needed
     def scheduleNextNotification( self ):
-        if len(self.nextTrains) == 0:
-            self.getNextTrains()
-        nextTrain = self.nextTrains[0]
-        tm = datetime.now( timezone.utc )
-        if nextTrain < tm:
-            # past by
-            self.nextTrains.pop(0)
-            return( self.scheduleNextNotification() )
-        secondsRemaining = (nextTrain - tm ).seconds
+
+        secondsRemaining = self.secondsUntilNextTrain()
         minutesRemaining = secondsRemaining / 60
         if minutesRemaining<= 7: 
             self.eventQueue.put([const.EVENT_NEXTTRAIN,  minutesRemaining ])
@@ -60,7 +54,22 @@ class webConnect():
             secsUntilNextEvent = max( 10, secondsRemaining - 420 )
         Timer( secsUntilNextEvent, self.scheduleNextNotification).start()
         logger.info('Next train notification in %i seconds' % secsUntilNextEvent )
-        
+
+    def notifyNextTrain( self ):        
+        secondsRemaining = self.secondsUntilNextTrain()
+        minutesRemaining = secondsRemaining / 60
+        self.eventQueue.put([const.EVENT_NEXTTRAIN,  minutesRemaining ])
+
+    def secondsUntilNextTrain( self ):        
+        if len(self.nextTrains) == 0:
+            self.getNextTrains()
+        nextTrain = self.nextTrains[0]
+        tm = datetime.now( timezone.utc )
+        if nextTrain < tm:
+            # past by
+            self.nextTrains.pop(0)
+            return( self.getNextTrain() )
+        return (nextTrain - tm ).seconds
 
 def main( ):
     q=queue.Queue()

@@ -35,6 +35,9 @@ def processKeyCodes( payload):
     logger.info("processing payload %s" % payload)
     if payload == "3695147" or payload == "6932147XY" :
         pins.unlock()
+    elif payload == "":
+        # z pressed
+        webConnection.notifyNextTrain()
     elif payload == "369":
         pins.disableAllPins()
         LCDScreen.publish([5, "All Pins Off"] )
