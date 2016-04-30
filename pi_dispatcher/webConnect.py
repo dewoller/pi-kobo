@@ -33,9 +33,14 @@ class webConnect():
         rv = []
         trainsJSON = requests.get( url=nextTrainURL, params=nextTrainParams ).json()
         for train in trainsJSON['values']:
-             #print("Train %s dir %i" % (train['run']['destination_name'], train['platform']['direction']['direction_id']))
-             if train['platform']['direction']['direction_id']==0 and train['run']['destination_name'] == "Flinders Street":
-                 rv.append( parser.parse(train['time_timetable_utc']) )
+            #print("Train %s dir %i" % 
+            if (   train['platform']['direction']['direction_id']==0 
+                    and train['run']['destination_name'] == "Flinders Street"
+                ):
+                rv.append( parser.parse(train['time_timetable_utc']) )
+            elif train['platform']['direction']['direction_id']!=8:
+                logger.debug("I have a train going direction %i and destination %s" % ( 
+                     train['platform']['direction']['direction_id'], train['run']['destination_name']))
         return rv
 
     # continuiously runs, reading and posting train notifications on event queue
