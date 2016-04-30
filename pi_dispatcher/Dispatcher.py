@@ -4,9 +4,9 @@ import sys
 from subprocess import call
 import string
 
-import logging
-from logsetup import configure_log
-configure_log(logging.DEBUG,__name__)
+import logging, logging.handlers, logging.config
+logging.config.fileConfig('log.conf' )
+logging.getLogger("Adafruit_I2C.Device.Bus.1.Address.0X5A").setLevel(logging.WARNING)
 logger=logging.getLogger( "Dispatcher" )
 
 import const
