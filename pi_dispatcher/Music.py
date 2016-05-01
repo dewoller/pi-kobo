@@ -29,6 +29,7 @@ for i in range(7):
 class Music():
     def __init__(self):
         self.keepPlaying=False
+
     def playSong( self, songIndex ):
         self.keepPlaying=True
         _thread.start_new_thread(self.playSongInBackground, (songIndex, ))

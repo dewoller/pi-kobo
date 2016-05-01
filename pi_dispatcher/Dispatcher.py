@@ -134,7 +134,10 @@ def dispatcherLoop( ):
             RFIDReader.lightOff(0)
             music.stopPlay()
         elif payload[0] == const.EVENT_NEXTTRAIN:
-            LCDScreen.display("NEXT TRAIN IN \n%s MINUTES" % payload[1] )
+            if payload[1] >= 0:
+                LCDScreen.display("NEXT TRAIN IN\n{minutes:.2f} MINUTES".format( minutes=payload[1] ) )
+            else:
+                LCDScreen.display("Error getting\nnext train")
         else:
             logger.info("Unknown event: %s " % payload[0])
 

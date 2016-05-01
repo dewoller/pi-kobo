@@ -16,8 +16,8 @@ import const
 import _thread, sys
 import Adafruit_MPR121.MPR121 as MPR121
 
+keymap=['1','2','3','X','4','5','6','Y','7','8','9','Z']
 #keymap=['X','7','4','1','Y','8','5','2','Z','9','6','3']
-keymap=['X','7','4','1','Y','8','5','2','Z','9','6','3']
 
 class Keypad():
     def __init__(self, eventQueue):

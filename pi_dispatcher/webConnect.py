@@ -35,7 +35,10 @@ class webConnect():
         for train in trainsJSON['values']:
             #print("Train %s dir %i" % 
             if (   train['platform']['direction']['direction_id']==0 
-                    and train['run']['destination_name'] == "Flinders Street"
+                    and (
+                        train['run']['destination_name'] == "Flinders Street"
+                        or train['run']['destination_name'] == "Parliament"
+                        )
                 ):
                 rv.append( parser.parse(train['time_timetable_utc']) )
             elif train['platform']['direction']['direction_id']!=8:
@@ -68,6 +71,8 @@ class webConnect():
     def secondsUntilNextTrain( self ):        
         if len(self.nextTrains) == 0:
             self.getNextTrains()
+        if len(self.nextTrains) == 0:
+            self.eventQueue.put([const.EVENT_NEXTTRAIN,  -1 ])
         nextTrain = self.nextTrains[0]
         tm = datetime.now( timezone.utc )
         if nextTrain < tm:

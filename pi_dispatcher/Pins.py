@@ -55,10 +55,10 @@ class Pins:
 
         if latestOffTime[ pinIndex ]-1 <= time.time():
             self.GPIO_output(wateringPins[ pinIndex ], P.OFF)
-        if pinIndex == lockPinIndex:
-            self.eventQueue.put([const.EVENT_LOCKED,pinIndex])
-        else:
-            self.eventQueue.put([const.EVENT_PINOFF,pinIndex ])
+            if pinIndex == lockPinIndex:
+                self.eventQueue.put([const.EVENT_LOCKED,pinIndex])
+            else:
+                self.eventQueue.put([const.EVENT_PINOFF,pinIndex ])
 
     def disableAllPins(self ):
         for pinIndex in range(len(wateringPins)):
@@ -69,7 +69,6 @@ class Pins:
     def water(self, n, duration=120):
         # 0'th pin is lock mechanism, pins 1..3 are 
         if (n<4) & (n>0): # error checking
-        # subtract 1 because pins number from 1-3, and the fourth pin is for the lock mechanism
             self.enablePin(n, duration)
         else:
             logger.debug( "Invalid watering pin %s " %( n ))
