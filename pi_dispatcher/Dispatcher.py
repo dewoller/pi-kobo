@@ -76,6 +76,9 @@ def startDispatcher( ):
             logger.error('Some error, capture it and continue', exc_info=True)
 
 def dispatcherLoop( ):
+    currentStateIndex=0
+    nextState=[1,3,1,5,1,3,1,5]
+    finalStateIndex=len(nextState)
     logger.debug("inside dispatcherloop")
     RFIDReader.readTag()
     saveRFID=False
@@ -93,8 +96,7 @@ def dispatcherLoop( ):
             processKeyCodes( payload[1])
 
         elif payload[0] == const.EVENT_TOUCHUP:
-            if payload[1] != 'Z':
-                LCDScreen.displayChar(payload[1])
+            LCDScreen.displayChar(payload[1])
 
         elif payload[0] == const.EVENT_TOUCHDOWN:
             pass
@@ -104,6 +106,7 @@ def dispatcherLoop( ):
             if (saveRFID):
                 db.addCard( payload[1])
                 logger.info("tag saved: %s " % payload[1])
+                music.playSong("beeps2")
             elif db.hasCard( payload[1]):
                 pins.unlock()
             else:
@@ -111,8 +114,17 @@ def dispatcherLoop( ):
 
         elif payload[0] == const.EVENT_TOUCHED:
             logger.debug("touched received: %s " % payload[1])
-            if payload[1] & 15 == 15:
-                # keys 0123 are pressed
+
+            if payload[1] == nextState[ currentStateIndex ]:
+                logger.debug("Next State: %s " % currentStateIndex)
+                currentStateIndex=currentStateIndex + 1
+            else:
+                currentStateIndex=0
+
+            if currentStateIndex == finalStateIndex:
+                # we have a winner
+                currentStateIndex=0
+                music.playSong("beeps1")
                 saveRFID=True
             else:
                 saveRFID=False
