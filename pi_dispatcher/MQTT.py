@@ -16,6 +16,7 @@ import const
 class MQTT:
     def __init__(self, serverIP, eventQueue, clientID, inTopic, outTopic):
     
+        logger.debug("Starting")
         self.serverIP =  serverIP
         self.eventQueue = eventQueue
         self.inTopic = inTopic
@@ -84,7 +85,6 @@ class MQTT:
             time.sleep(2)
 
  
-logger.info('first')
 if __name__ == "__main__":
     logging.basicConfig()
     import queue

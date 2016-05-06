@@ -38,6 +38,7 @@ def encode2hex( packet ):
 
 class RFID():
     def __init__(self, eventQueue):
+        logger.debug("Starting")
         self.ser=getSerial()
         time.sleep(.1)
         self.resetRFID()
@@ -53,28 +54,37 @@ class RFID():
     def reader( self, eventQueue ):
         logger.debug("Inside RFID reader")
         while (True):
-            (eventType, payload) = self.read_command( )
-            try:
-                eventName = sm130Val[ eventType ]
-            except KeyError:
-                logger.debug("Key Error read from serial %s" % eventType)
-                continue
+            try:   ## make sure this thing does not crash due to transient electrical things
+                (eventType, payload) = self.read_command( )
+                try:
+                    eventName = sm130Val[ eventType ]
+                except KeyError:
+                    logger.debug("Key Error read from serial %s" % eventType)
+                    continue
 
-            if eventName == 'Firmware'  or eventName == 'Reset':
-                logger.info("Firmware: %s" % (payload))
-                self.readTag()  # our job is to always be reading tags
-            elif eventName == 'Seek' :
-                if payload != b'\x4c':
-                    tag =encode2hex( payload )
-                    logger.info("Real Tag: %s" % ( tag ))
-                    eventQueue.put([const.EVENT_RFID_HASTAG,  tag ])
-                    self.getNextTag()
-            elif (eventName == 'Halt') or (eventName == 'WritePort' ) :
-                time.sleep(.01)
-                self.readTag() # get back to reading tags
-            else:
-                logger.info("Unhandled RFID event %s" % eventName)
-                self.readTag()  # dont care what happened, get back to reading tags
+                if eventName == 'Firmware'  or eventName == 'Reset':
+                    logger.info("Firmware: %s" % (payload))
+                    self.readTag()  # our job is to always be reading tags
+                elif eventName == 'Seek' :
+                    if payload != b'\x4c':
+                        tag =encode2hex( payload )
+                        logger.info("Real Tag: %s" % ( tag ))
+                        eventQueue.put([const.EVENT_RFID_HASTAG,  tag ])
+                        time.sleep(.01)
+                        self.getNextTag()
+                elif (eventName == 'Halt') or (eventName == 'WritePort' ) :
+                    time.sleep(.01)
+                    self.readTag() # get back to reading tags
+                else:
+                    logger.info("Unhandled RFID event %s" % eventName)
+                    self.readTag()  # dont care what happened, get back to reading tags
+            except KeyboardInterrupt:
+                System.exit(0)
+            except Exception:
+                logger.error( "Other RFID error:")
+                time.sleep(.1)
+                logger.error(traceback.format_exc())
+                continue
         
     def send_command(self, command, payload=''):
         packet = build_packet(command, payload)
@@ -106,7 +116,6 @@ class RFID():
         self.send_command(sm130Code['Reset'])
 
     def getNextTag(self): 
-        time.sleep(.01)
         self.haltTag()
     
     def readTag(self): 

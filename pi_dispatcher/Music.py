@@ -28,6 +28,7 @@ for i in range(7):
 
 class Music():
     def __init__(self):
+        logger.debug("Starting")
         self.keepPlaying=False
 
     def playSong( self, songIndex ):

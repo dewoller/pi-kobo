@@ -24,6 +24,7 @@ class LCD():
 
         # Configuration parameters
         # I2C Address, Port, Enable pin, RW pin, RS pin, Data 4 pin, Data 5 pin, Data 6 pin, Data 7 pin, Backlight pin (optional)
+        logger.debug("Starting")
         self.lcd = i2c_lcd_smbus.i2c_lcd(0x27,1, 2, 1, 0, 4, 5, 6, 7, 3)
 
         # If you want to disable the cursor, uncomment the following line

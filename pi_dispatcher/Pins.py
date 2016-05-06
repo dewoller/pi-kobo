@@ -32,6 +32,7 @@ class P():
 class Pins:
     def __init__(self, eventQueue):
         # need eventQueue because we want to be able to pass messages back, eg saying when done
+        logger.debug("Starting")
         self.eventQueue = eventQueue
 
     def GPIO_output( self, pin, what):

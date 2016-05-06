@@ -22,6 +22,7 @@ keymap=['1','2','3','X','4','5','6','Y','7','8','9','Z']
 class Keypad():
     def __init__(self, eventQueue):
         # Create MPR121 instance.
+        logger.debug("Starting")
         self.cap = MPR121.MPR121()
 
         if not self.cap.begin():
@@ -48,13 +49,13 @@ class Keypad():
                                 result=""
                             else:
                                 result = result + key
-                            logger.debug( "key pressed %s, current result %s" % (key, result) )
+                            logger.debug( "key pressed '%s', current result '%s'" % (key, result) )
                     last_touched = current_touched
                     time.sleep(.01)
                 except KeyboardInterrupt:
                     System.exit(0)
                 except Exception:
-                    logger.error( "Other error:")
+                    logger.error( "Other Keyboard error:")
                     logger.error(traceback.format_exc())
 
 def main( ):

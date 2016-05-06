@@ -29,15 +29,27 @@ music = Music.Music()
 RFIDReader = RFID.RFID(q)
 webConnection = webConnect.webConnect(q)
 
+def restart():
+    command = "/sbin/shutdown -r now"
+    import subprocess
+    process = subprocess.Popen(command.split(), stdout=subprocess.PIPE)
+    output = process.communicate()[0]
+    logger.info( "rebooing: %s" %( output ))
 
 def processKeyCodes( payload):
 
-    logger.info("processing payload %s" % payload)
+    logger.info("processing payload '%s'" % payload)
     if payload == "3695147" or payload == "6932147XY" :
         pins.unlock()
     elif payload == "":
         # z pressed
         webConnection.notifyNextTrain()
+    elif payload == "666":
+        sys.exit()
+    elif payload == "667":
+        LCDScreen.publish([5, "Rebooting"] )
+        time.sleep(1)
+        restart()
     elif payload == "369":
         pins.disableAllPins()
         LCDScreen.publish([5, "All Pins Off"] )
@@ -51,7 +63,7 @@ def processKeyCodes( payload):
             mqtt.publish("water/%s" % pin, "%s" % duration)
         except ValueError:
             LCDScreen.publish([1, "What?"])
-            logger.info( "incomprehensible message %s " %(payload))
+            logger.info( "incomprehensible message '%s' " %(payload))
         
     elif payload == "147":
         vals = pins.readTemperature()
@@ -73,9 +85,19 @@ def startDispatcher( ):
         except (SystemExit, KeyboardInterrupt):
             raise
         except Exception:
-            logger.error('Some error, capture it and continue', exc_info=True)
+            logger.error('Some Overall error, capture it and continue', exc_info=True)
+            time.sleep(1)
+            LCDScreen = LCD.LCD()
+            mqtt = MQTT.MQTT(  "192.168.1.38", q, clientID="Dispatcher", inTopic="dispatcher", outTopic="keypad" )
+            mqtt.publish("pi", "Restarting after error")
+            pins =Pins.Pins( q )
+            keypad = Keypad.Keypad(q)
+            music = Music.Music()
+            RFIDReader = RFID.RFID(q)
+            webConnection = webConnect.webConnect(q)
 
 def dispatcherLoop( ):
+    # reinitialize because we might be coming in after an error
     currentStateIndex=0
     nextState=[1,3,1,5,1,3,1,5]
     finalStateIndex=len(nextState)
@@ -118,6 +140,9 @@ def dispatcherLoop( ):
             if payload[1] == nextState[ currentStateIndex ]:
                 logger.debug("Next State: %s " % currentStateIndex)
                 currentStateIndex=currentStateIndex + 1
+                if currentStateIndex >1 :
+                    LCDScreen.display("Current State %s" % currentStateIndex)
+
             else:
                 currentStateIndex=0
 

@@ -25,6 +25,7 @@ nextTrainURL = "https://ptv.vic.gov.au/transport/direct/chronos.php"
 # when last train gone, get next 20 trains
 class webConnect():
     def __init__(self, eventQueue):
+        logger.debug("Starting")
         self.nextTrains = self.getNextTrains()
         self.eventQueue = eventQueue
         self.scheduleNextNotification()
