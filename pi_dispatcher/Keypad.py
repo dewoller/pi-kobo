@@ -13,8 +13,10 @@ if __name__ == '__main__' and __package__ is None:
 
 import time, sys
 import const
-import _thread, sys
 import Adafruit_MPR121.MPR121 as MPR121
+
+import threading
+main_thread = threading.current_thread()
 
 keymap=['1','2','3','X','4','5','6','Y','7','8','9','Z']
 #keymap=['X','7','4','1','Y','8','5','2','Z','9','6','3']
@@ -24,28 +26,31 @@ class Keypad():
         # Create MPR121 instance.
         logger.debug("Starting")
         self.cap = MPR121.MPR121()
+        self.eventQueue = eventQueue
 
         if not self.cap.begin():
             print( 'Error initializing MPR121.  Check your wiring!')
-        _thread.start_new_thread(self.main, (eventQueue, ))
+        t=threading.Thread( target=self.main )
+        t.daemon = True
+        t.start()
 
-    def main( self, eventQueue ):
+    def main( self):
         result=''
         last_touched=0
-        while (True):
+        while ( main_thread.is_alive() ):
                 try:
                     current_touched = self.cap.touched()
                     if current_touched!=last_touched:
-                        eventQueue.put([const.EVENT_TOUCHED,  current_touched])
+                        self.eventQueue.put([const.EVENT_TOUCHED,  current_touched])
                     for i in range(12):
                         pin_bit = 1 << i
                         key=keymap[i]
                         if current_touched & pin_bit and not last_touched & pin_bit:
-                            eventQueue.put([const.EVENT_TOUCHDOWN,  key])
+                            self.eventQueue.put([const.EVENT_TOUCHDOWN,  key])
                         if not current_touched & pin_bit and last_touched & pin_bit:
-                            eventQueue.put([const.EVENT_TOUCHUP,  key])
+                            self.eventQueue.put([const.EVENT_TOUCHUP,  key])
                             if key=='Z':
-                                eventQueue.put([const.EVENT_KEYS,  result])
+                                self.eventQueue.put([const.EVENT_KEYS,  result])
                                 result=""
                             else:
                                 result = result + key

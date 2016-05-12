@@ -5,9 +5,11 @@ logger = logging.getLogger(__name__)
 
 import time
 import const
-import _thread, struct
+import struct
 import queue
 import serial
+import threading
+main_thread = threading.current_thread()
 
 sm130Code = {
     "Reset": 0x80,
@@ -39,21 +41,24 @@ def encode2hex( packet ):
 class RFID():
     def __init__(self, eventQueue):
         logger.debug("Starting")
+        self.eventQueue = eventQueue
         self.ser=getSerial()
         time.sleep(.1)
         self.resetRFID()
         time.sleep(.1)
         self.readTag()
         self.currentWritePort = 0
-        _thread.start_new_thread(self.reader, (eventQueue, ))
+        self.t = threading.Thread(target=self.reader)
+        self.t.daemon = True
+        self.t.start()
     
-    def prepareRFID( self, eventQueue ):
-        eventQueue.task_done()
+    def prepareRFID( self ):
+        self.eventQueue.task_done()
 
     # continuiously runs, reading and posting tags on event queue
-    def reader( self, eventQueue ):
+    def reader( self ):
         logger.debug("Inside RFID reader")
-        while (True):
+        while (main_thread.is_alive()):
             try:   ## make sure this thing does not crash due to transient electrical things
                 (eventType, payload) = self.read_command( )
                 try:
@@ -69,7 +74,7 @@ class RFID():
                     if payload != b'\x4c':
                         tag =encode2hex( payload )
                         logger.info("Real Tag: %s" % ( tag ))
-                        eventQueue.put([const.EVENT_RFID_HASTAG,  tag ])
+                        self.eventQueue.put([const.EVENT_RFID_HASTAG,  tag ])
                         time.sleep(.01)
                         self.getNextTag()
                 elif (eventName == 'Halt') or (eventName == 'WritePort' ) :

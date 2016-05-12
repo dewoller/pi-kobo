@@ -3,11 +3,16 @@ import queue
 import sys
 from subprocess import call
 import string
+import time
 
 import logging, logging.handlers, logging.config
 logging.config.fileConfig('log.conf' )
 logging.getLogger("Adafruit_I2C.Device.Bus.1.Address.0X5A").setLevel(logging.WARNING)
 logger=logging.getLogger( "Dispatcher" )
+
+import os
+logger.debug("Current Nice Level is %s" % os.nice(-19))
+
 
 import const
 import MQTT
@@ -30,16 +35,17 @@ RFIDReader = RFID.RFID(q)
 webConnection = webConnect.webConnect(q)
 
 def restart():
+    logger.info( "rebooting: %s" %( output ))
     command = "/sbin/shutdown -r now"
     import subprocess
     process = subprocess.Popen(command.split(), stdout=subprocess.PIPE)
     output = process.communicate()[0]
-    logger.info( "rebooing: %s" %( output ))
 
 def processKeyCodes( payload):
+    badMessage=False
 
     logger.info("processing payload '%s'" % payload)
-    if payload == "3695147" or payload == "6932147XY" :
+    if payload == "3695147" :
         pins.unlock()
     elif payload == "":
         # z pressed
@@ -56,14 +62,16 @@ def processKeyCodes( payload):
         mqtt.publish("water/0", "0")
     elif payload[0:2] == "XY":
         try:
-            pin = int(payload[2:3]) - 6
+            pin = int(payload[2:3])
             duration = int(payload[3:])
+        except ValueError:
+            badMessage=True
+        if pin<1 or pin > 3:
+            badMessage=True
+        if not badMessage: 
             pins.water(pin, duration)
             LCDScreen.publish([5, "Water zone #%s for  %s sec" % (pin, duration)])
             mqtt.publish("water/%s" % pin, "%s" % duration)
-        except ValueError:
-            LCDScreen.publish([1, "What?"])
-            logger.info( "incomprehensible message '%s' " %(payload))
         
     elif payload == "147":
         vals = pins.readTemperature()
@@ -72,6 +80,9 @@ def processKeyCodes( payload):
         mqtt.publish("sensor1/humidity","{:.1f}".format(vals[1]))
         mqtt.publish("sensor1/dewpoint","{:.1f}".format(vals[2]))
     else:
+        badMessage=True
+
+    if badMessage:
         LCDScreen.publish([1, "What?"])
         logger.info( "incomprehensible message %s " %(payload))
 
@@ -85,16 +96,8 @@ def startDispatcher( ):
         except (SystemExit, KeyboardInterrupt):
             raise
         except Exception:
-            logger.error('Some Overall error, capture it and continue', exc_info=True)
+            logger.error('Some Overall error, capture it and continue, this should be handled at lower level', exc_info=True)
             time.sleep(1)
-            LCDScreen = LCD.LCD()
-            mqtt = MQTT.MQTT(  "192.168.1.38", q, clientID="Dispatcher", inTopic="dispatcher", outTopic="keypad" )
-            mqtt.publish("pi", "Restarting after error")
-            pins =Pins.Pins( q )
-            keypad = Keypad.Keypad(q)
-            music = Music.Music()
-            RFIDReader = RFID.RFID(q)
-            webConnection = webConnect.webConnect(q)
 
 def dispatcherLoop( ):
     # reinitialize because we might be coming in after an error

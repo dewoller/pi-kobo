@@ -34,6 +34,7 @@ class Pins:
         # need eventQueue because we want to be able to pass messages back, eg saying when done
         logger.debug("Starting")
         self.eventQueue = eventQueue
+        self.disableAllPins()
 
     def GPIO_output( self, pin, what):
         logger.info( "setting pin {} to state {} ".format( pin, what))

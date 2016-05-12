@@ -1,4 +1,5 @@
-from threading import Thread
+import threading
+main_thread = threading.current_thread()
 import mosquitto
 import time
 from socket import error as socket_error
@@ -25,7 +26,7 @@ class MQTT:
         self.socketError = False
         self.connect()
 
-        self.t = Thread(target=self.loop)
+        self.t = threading.Thread(target=self.loop)
         self.t.daemon = True
         self.t.start()
 
@@ -76,7 +77,7 @@ class MQTT:
 
 
     def loop( self ):
-        while True:
+        while main_thread.is_alive():
             if self.socketError:
                 logger.debug("Socket Error Flag = %s in Loop" % (self.socketError))
                 self.connect()        
