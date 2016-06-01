@@ -32,7 +32,7 @@ class P():
 class Pins:
     def __init__(self, eventQueue):
         # need eventQueue because we want to be able to pass messages back, eg saying when done
-        logger.debug("Starting")
+        logger.info("Starting")
         self.eventQueue = eventQueue
         self.disableAllPins()
 
@@ -53,7 +53,7 @@ class Pins:
 
 
     def disablePin(self,  pinIndex):
-        logger.debug( "latestoff {} compared to time {} , pin {}".format( latestOffTime[ pinIndex ],time.time(), pinIndex))
+        logger.info( "latestoff {} compared to time {} , pin {}".format( latestOffTime[ pinIndex ],time.time(), pinIndex))
 
         if latestOffTime[ pinIndex ]-1 <= time.time():
             self.GPIO_output(wateringPins[ pinIndex ], P.OFF)
@@ -73,7 +73,7 @@ class Pins:
         if (n<4) & (n>0): # error checking
             self.enablePin(n, duration)
         else:
-            logger.debug( "Invalid watering pin %s " %( n ))
+            logger.error( "Invalid watering pin %s " %( n ))
         
 
     def unlock(self, nseconds=8):

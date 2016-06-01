@@ -40,7 +40,7 @@ def encode2hex( packet ):
 
 class RFID():
     def __init__(self, eventQueue):
-        logger.debug("Starting")
+        logger.info("Starting")
         self.eventQueue = eventQueue
         self.ser=getSerial()
         time.sleep(.1)
@@ -57,14 +57,14 @@ class RFID():
 
     # continuiously runs, reading and posting tags on event queue
     def reader( self ):
-        logger.debug("Inside RFID reader")
+        logger.info("Inside RFID reader")
         while (main_thread.is_alive()):
             try:   ## make sure this thing does not crash due to transient electrical things
                 (eventType, payload) = self.read_command( )
                 try:
                     eventName = sm130Val[ eventType ]
                 except KeyError:
-                    logger.debug("Key Error read from serial %s" % eventType)
+                    logger.error("Key Error read from serial %s" % eventType)
                     continue
 
                 if eventName == 'Firmware'  or eventName == 'Reset':
@@ -81,7 +81,7 @@ class RFID():
                     time.sleep(.01)
                     self.readTag() # get back to reading tags
                 else:
-                    logger.info("Unhandled RFID event %s" % eventName)
+                    logger.error("Unhandled RFID event %s" % eventName)
                     self.readTag()  # dont care what happened, get back to reading tags
             except KeyboardInterrupt:
                 System.exit(0)
@@ -110,7 +110,7 @@ class RFID():
             computed_checksum = build_packet(response_to, response)[-1]
             assert computed_checksum == response_checksum
         except AssertionError:
-            logger.info("Serial read error")
+            logger.error("Serial read error")
             return ("","")
         return (response_to, response)
 

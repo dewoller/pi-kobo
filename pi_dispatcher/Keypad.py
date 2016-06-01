@@ -24,7 +24,7 @@ keymap=['1','2','3','X','4','5','6','Y','7','8','9','Z']
 class Keypad():
     def __init__(self, eventQueue):
         # Create MPR121 instance.
-        logger.debug("Starting")
+        logger.info("Starting")
         self.cap = MPR121.MPR121()
         self.eventQueue = eventQueue
 

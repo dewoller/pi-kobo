@@ -11,7 +11,7 @@ logging.getLogger("Adafruit_I2C.Device.Bus.1.Address.0X5A").setLevel(logging.WAR
 logger=logging.getLogger( "Dispatcher" )
 
 import os
-logger.debug("Current Nice Level is %s" % os.nice(-19))
+logger.info("Current Nice Level is %s" % os.nice(-19))
 
 
 import const
@@ -84,12 +84,12 @@ def processKeyCodes( payload):
 
     if badMessage:
         LCDScreen.publish([1, "What?"])
-        logger.info( "incomprehensible message %s " %(payload))
+        logger.warning( "incomprehensible message %s " %(payload))
 
 
 
 def startDispatcher( ):
-    logger.debug("inside dispatcherloop")
+    logger.info("inside startDispatcher")
     while True:
         try:
             dispatcherLoop()
@@ -104,7 +104,7 @@ def dispatcherLoop( ):
     currentStateIndex=0
     nextState=[1,3,1,5,1,3,1,5]
     finalStateIndex=len(nextState)
-    logger.debug("inside dispatcherloop")
+    logger.info("inside dispatcherloop")
     RFIDReader.readTag()
     saveRFID=False
     while True:
@@ -127,7 +127,7 @@ def dispatcherLoop( ):
             pass
 
         elif payload[0] == const.EVENT_RFID_HASTAG:
-            logger.debug("tag received: %s " % payload[1])
+            logger.info("tag received: %s " % payload[1])
             if (saveRFID):
                 db.addCard( payload[1])
                 logger.info("tag saved: %s " % payload[1])
@@ -138,10 +138,10 @@ def dispatcherLoop( ):
                 LCDScreen.publish([1, "I don't know that card"])
 
         elif payload[0] == const.EVENT_TOUCHED:
-            logger.debug("touched received: %s " % payload[1])
+            logger.info("touched received: %s " % payload[1])
 
             if payload[1] == nextState[ currentStateIndex ]:
-                logger.debug("Next State: %s " % currentStateIndex)
+                logger.info("Next State: %s " % currentStateIndex)
                 currentStateIndex=currentStateIndex + 1
                 if currentStateIndex >1 :
                     LCDScreen.display("Current State %s" % currentStateIndex)
@@ -179,7 +179,7 @@ def dispatcherLoop( ):
             else:
                 LCDScreen.display("Error getting\nnext train")
         else:
-            logger.info("Unknown event: %s " % payload[0])
+            logger.error("Unknown event: %s " % payload[0])
 
 
             

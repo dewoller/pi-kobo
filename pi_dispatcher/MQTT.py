@@ -17,7 +17,7 @@ import const
 class MQTT:
     def __init__(self, serverIP, eventQueue, clientID, inTopic, outTopic):
     
-        logger.debug("Starting")
+        logger.info("Starting")
         self.serverIP =  serverIP
         self.eventQueue = eventQueue
         self.inTopic = inTopic
@@ -39,7 +39,7 @@ class MQTT:
             
         def on_disconnect(mosq, obj, rc):
             if (rc==1):
-                logger.info("Disconnection unexpected")
+                logger.error("Disconnection unexpected")
                 self.connect()
 
         def on_publish(obj, other, msg ):
@@ -58,7 +58,7 @@ class MQTT:
             except socket_error:
                 retry =  True
                 self.eventQueue.put([const.EVENT_MQTTERROR,"Retry MQTT connect"])
-                logger.info("Retrying MQTT connect")
+                logger.error("Retrying MQTT connect")
                 time.sleep(5)
 
         self.socketError = False 
@@ -70,8 +70,8 @@ class MQTT:
         except socket_error:
             self.eventQueue.put([const.EVENT_MQTTERROR,"socket error"])
             self.socketError = True
-            logger.info("Socket error when trying to publish %s" % (msg) )
-            logger.info("Socket Error Flag = %s" % (self.socketError))
+            logger.error("Socket error when trying to publish %s" % (msg) )
+            logger.error("Socket Error Flag = %s" % (self.socketError))
 
             
 
@@ -79,7 +79,7 @@ class MQTT:
     def loop( self ):
         while main_thread.is_alive():
             if self.socketError:
-                logger.debug("Socket Error Flag = %s in Loop" % (self.socketError))
+                logger.error("Socket Error Flag = %s in Loop" % (self.socketError))
                 self.connect()        
                 
             self.client.loop()

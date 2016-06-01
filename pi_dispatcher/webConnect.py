@@ -25,7 +25,7 @@ nextTrainURL = "https://ptv.vic.gov.au/transport/direct/chronos.php"
 # when last train gone, get next 20 trains
 class webConnect():
     def __init__(self, eventQueue):
-        logger.debug("Starting")
+        logger.info("Starting")
         self.nextTrains = self.getNextTrains()
         self.eventQueue = eventQueue
         self.scheduleNextNotification()
@@ -35,15 +35,18 @@ class webConnect():
         trainsJSON = requests.get( url=nextTrainURL, params=nextTrainParams ).json()
         for train in trainsJSON['values']:
             #print("Train %s dir %i" % 
-            if (   train['platform']['direction']['direction_id']==0 
-                    and (
-                        train['run']['destination_name'] == "Flinders Street"
-                        or train['run']['destination_name'] == "Parliament"
-                        )
-                ):
+            if ((   train['platform']['direction']['direction_id']==0 
+                    or train['platform']['direction']['direction_id']==1 
+                )
+                    and 
+                (
+                    train['run']['destination_name'] == "Flinders Street"
+                    or train['run']['destination_name'] == "Parliament"
+                    or train['run']['destination_name'] == "Heidelberg"
+                )):
                 rv.append( parser.parse(train['time_timetable_utc']) )
             elif train['platform']['direction']['direction_id']!=8:
-                logger.debug("I have a train going direction %i and destination %s" % ( 
+                logger.warning("I have a train going direction %i and destination %s" % ( 
                      train['platform']['direction']['direction_id'], train['run']['destination_name']))
         return rv
 
@@ -52,6 +55,8 @@ class webConnect():
     def scheduleNextNotification( self ):
 
         secondsRemaining = self.secondsUntilNextTrain()
+        if secondsRemaining <0  : # we had an error, wait an hour until trying again
+            secondsRemaining=60*60 
         minutesRemaining = secondsRemaining / 60
         if minutesRemaining<= 7: 
             self.eventQueue.put([const.EVENT_NEXTTRAIN,  minutesRemaining ])
@@ -62,24 +67,25 @@ class webConnect():
         else:
             secsUntilNextEvent = max( 10, secondsRemaining - 420 )
         Timer( secsUntilNextEvent, self.scheduleNextNotification).start()
-        logger.info('Next train notification in %i seconds' % secsUntilNextEvent )
+        logger.info('Next train notification check in %i seconds' % secsUntilNextEvent )
 
     def notifyNextTrain( self ):        
         secondsRemaining = self.secondsUntilNextTrain()
-        minutesRemaining = secondsRemaining / 60
-        self.eventQueue.put([const.EVENT_NEXTTRAIN,  minutesRemaining ])
+        if secondsRemaining >0  : # if we had an error, do nothing
+            minutesRemaining = secondsRemaining / 60
+            self.eventQueue.put([const.EVENT_NEXTTRAIN,  minutesRemaining ])
 
     def secondsUntilNextTrain( self ):        
         if len(self.nextTrains) == 0:
             self.getNextTrains()
-        if len(self.nextTrains) == 0:
-            self.eventQueue.put([const.EVENT_NEXTTRAIN,  -1 ])
+        if len(self.nextTrains) == 0:  # error, we have no trains
+            return(-1)
         nextTrain = self.nextTrains[0]
         tm = datetime.now( timezone.utc )
         if nextTrain < tm:
             # past by
             self.nextTrains.pop(0)
-            return( self.getNextTrain() )
+            return( self.secondsUntilNextTrain() )
         return (nextTrain - tm ).seconds
 
 def main( ):
