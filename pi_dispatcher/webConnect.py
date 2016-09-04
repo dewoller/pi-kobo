@@ -17,7 +17,7 @@ nextTrainParams = dict(
     limit=20,
     mode=0
 )
-nextTrainURL = "https://ptv.vic.gov.au/transport/direct/chronos.php"
+nextTrainURL = "https://www.ptv.vic.gov.au/langsing/stop-services"
         
 # get the next 20 trains
 # store city bound trains and time leaving
@@ -32,7 +32,13 @@ class webConnect():
     
     def getNextTrains( self ):
         rv = []
-        trainsJSON = requests.get( url=nextTrainURL, params=nextTrainParams ).json()
+        trainsJSON={}
+        trainsJSON['values']=[]
+        try:
+            trainsJSON = requests.get( url=nextTrainURL, params=nextTrainParams ).json()
+        except ValueError:
+            logger.warning("Error when getting URL %s" % nextTrainURL)
+
         for train in trainsJSON['values']:
             #print("Train %s dir %i" % 
             if ((   train['platform']['direction']['direction_id']==0 

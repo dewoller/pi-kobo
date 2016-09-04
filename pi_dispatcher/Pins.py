@@ -39,6 +39,7 @@ class Pins:
     def GPIO_output( self, pin, what):
         logger.info( "setting pin {} to state {} ".format( pin, what))
         GPIO.setmode(GPIO.BOARD)
+        GPIP.setwarnings( False )
         GPIO.setup(pin, GPIO.OUT)
         GPIO.output(pin, what)
 
