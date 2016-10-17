@@ -26,14 +26,21 @@ nextTrainURL = "https://www.ptv.vic.gov.au/langsing/stop-services"
 class webConnect():
     def __init__(self, eventQueue):
         logger.info("Starting")
-        self.nextTrains = self.getNextTrains()
+        self.htmlErrorDelay=0
         self.eventQueue = eventQueue
+
+        try:
+            self.getNextTrains()
+        except ValueError:
+            pass
+
         self.scheduleNextNotification()
     
     def getNextTrains( self ):
-        rv = []
+        self.nextTrains = []
         trainsJSON={}
         trainsJSON['values']=[]
+        time.sleep(self.htmlErrorDelay)
         try:
             trainsJSON = requests.get( url=nextTrainURL, params=nextTrainParams ).json()
         except ValueError:
@@ -50,48 +57,53 @@ class webConnect():
                     or train['run']['destination_name'] == "Parliament"
                     or train['run']['destination_name'] == "Heidelberg"
                 )):
-                rv.append( parser.parse(train['time_timetable_utc']) )
+                self.nextTrains.append( parser.parse(train['time_timetable_utc']) )
             elif train['platform']['direction']['direction_id']!=8:
                 logger.warning("I have a train going direction %i and destination %s" % ( 
                      train['platform']['direction']['direction_id'], train['run']['destination_name']))
-        return rv
+
+        if ( len( self.nextTrains ) == 0):
+            # we had an error, wait until trying again
+            self.htmlErrorDelay=max( (self.htmlErrorDelay + 1) * 2, 3600)
+            raise ValueError('No Trains')
+        else:
+            self.htmlErrorDelay=0
+
+        return 
 
     # continuiously runs, reading and posting train notifications on event queue
     # always ends with a Timer set to run again as needed
     def scheduleNextNotification( self ):
+        secsUntilNextEvent = 55
 
-        secondsRemaining = self.secondsUntilNextTrain()
-        if secondsRemaining <0  : # we had an error, wait an hour until trying again
-            secondsRemaining=60*60 
-        minutesRemaining = secondsRemaining / 60
-        if minutesRemaining<= 7: 
-            self.eventQueue.put([const.EVENT_NEXTTRAIN,  minutesRemaining ])
-            if minutesRemaining<=1:
-                self.nextTrains.pop(0)
-                return( self.scheduleNextNotification() )
-            secsUntilNextEvent = 55
-        else:
-            secsUntilNextEvent = max( 10, secondsRemaining - 420 )
+        try:
+            secondsRemaining = self.secondsUntilNextTrain()
+        except ValueError:
+            Timer( secsUntilNextEvent, self.scheduleNextNotification).start()
+            return
+
+        self.eventQueue.put([const.EVENT_NEXTTRAIN,  secondsRemaining ])
+        if secondsRemaining < secsUntilNextEvent:
+            self.nextTrains.pop(0)
         Timer( secsUntilNextEvent, self.scheduleNextNotification).start()
-        logger.info('Next train notification check in %i seconds' % secsUntilNextEvent )
+        logger.debug('Next train notification check in %i seconds' % secsUntilNextEvent )
 
     def notifyNextTrain( self ):        
-        secondsRemaining = self.secondsUntilNextTrain()
-        if secondsRemaining >0  : # if we had an error, do nothing
-            minutesRemaining = secondsRemaining / 60
-            self.eventQueue.put([const.EVENT_NEXTTRAIN,  minutesRemaining ])
+        try:
+            self.eventQueue.put([const.EVENT_NEXTTRAIN, self.secondsUntilNextTrain()])
+        except ValueError:
+            return
 
     def secondsUntilNextTrain( self ):        
-        if len(self.nextTrains) == 0:
-            self.getNextTrains()
-        if len(self.nextTrains) == 0:  # error, we have no trains
-            return(-1)
+        if len(self.nextTrains) == 0: # we have no trains, go get some
+            self.getNextTrains()   # might raise ValueError, but taken care of in outer level
+
         nextTrain = self.nextTrains[0]
         tm = datetime.now( timezone.utc )
-        if nextTrain < tm:
-            # past by
-            self.nextTrains.pop(0)
-            return( self.secondsUntilNextTrain() )
+#        if nextTrain < tm:
+#            # past by
+#            self.nextTrains.pop(0)
+#            return( self.secondsUntilNextTrain() )
         return (nextTrain - tm ).seconds
 
 def main( ):
