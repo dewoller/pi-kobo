@@ -60,6 +60,7 @@ class RFID():
         logger.info("Inside RFID reader")
         while (main_thread.is_alive()):
             try:   ## make sure this thing does not crash due to transient electrical things
+                ## maybe put self.readTag here so that we are really ALWAYS reading tags
                 (eventType, payload) = self.read_command( )
                 try:
                     eventName = sm130Val[ eventType ]

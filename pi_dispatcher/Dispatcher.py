@@ -176,6 +176,7 @@ def dispatcherLoop( ):
         elif payload[0] == const.EVENT_NEXTTRAIN:
             if payload[1] >= 0:
                 LCDScreen.display("NEXT TRAIN IN\n{minutes:.0f}:{seconds:.0f} ".format( minutes=payload[1]//60, seconds=payload[1]%60 ) )
+                logger.info("time til next train: %s " % payload[1])
             else:
                 LCDScreen.display("Error getting\nnext train")
         else:

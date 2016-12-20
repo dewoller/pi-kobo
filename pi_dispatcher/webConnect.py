@@ -14,15 +14,15 @@ from datetime import datetime, timezone
 
 nextTrainParams = dict(
     stopId=10001168,
-    limit=20,
+    limit=10,
     mode=0
 )
 nextTrainURL = "https://www.ptv.vic.gov.au/langsing/stop-services"
         
-# get the next 20 trains
+# get the next 10 trains
 # store city bound trains and time leaving
 # at 7..1 minutes to train departure, display
-# when last train gone, get next 20 trains
+# when last train gone, get next 10 trains
 class webConnect():
     def __init__(self, eventQueue):
         logger.info("Starting")
@@ -46,6 +46,7 @@ class webConnect():
         except ValueError:
             logger.warning("Error when getting URL %s" % nextTrainURL)
 
+        logger.info( "ntrains = %s",len( trainsJSON['values'] ))
         for train in trainsJSON['values']:
             #print("Train %s dir %i" % 
             if ((   train['platform']['direction']['direction_id']==0 
@@ -58,6 +59,7 @@ class webConnect():
                     or train['run']['destination_name'] == "Heidelberg"
                 )):
                 self.nextTrains.append( parser.parse(train['time_timetable_utc']) )
+                logger.info( train['time_timetable_utc'] ) 
             elif train['platform']['direction']['direction_id']!=8:
                 logger.warning("I have a train going direction %i and destination %s" % ( 
                      train['platform']['direction']['direction_id'], train['run']['destination_name']))
@@ -100,10 +102,10 @@ class webConnect():
 
         nextTrain = self.nextTrains[0]
         tm = datetime.now( timezone.utc )
-#        if nextTrain < tm:
-#            # past by
-#            self.nextTrains.pop(0)
-#            return( self.secondsUntilNextTrain() )
+        if nextTrain < tm:
+            # past by
+            self.nextTrains.pop(0)
+            return( self.secondsUntilNextTrain() )
         return (nextTrain - tm ).seconds
 
 def main( ):
