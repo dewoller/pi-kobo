@@ -27,7 +27,7 @@ import webConnect
 q = queue.Queue()
 LCDScreen = LCD.LCD()
 mqtt = MQTT.MQTT(  "192.168.1.38", q, clientID="Dispatcher", inTopic="dispatcher", outTopic="keypad" )
-mqtt.publish("pi", "starting")
+mqtt.publish("door/dispatcher", "starting")
 pins =Pins.Pins( q )
 keypad = Keypad.Keypad(q)
 music = Music.Music()
