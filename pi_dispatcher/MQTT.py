@@ -1,6 +1,7 @@
 import threading
 main_thread = threading.current_thread()
-import mosquitto
+import paho.mqtt.client as client 
+import paho.mqtt.publish as publish
 import time
 from socket import error as socket_error
 import logging
@@ -14,6 +15,9 @@ import const
 # any incoming messages get put into the eventQueue
 # outgoing messages call publish direclty
 
+
+
+
 class MQTT:
     def __init__(self, serverIP, eventQueue, clientID, inTopic, outTopic):
     
@@ -22,51 +26,35 @@ class MQTT:
         self.eventQueue = eventQueue
         self.inTopic = inTopic
         self.outTopic = outTopic
-        self.client = mosquitto.Mosquitto(clientID)
-        self.socketError = False
-        self.connect()
+        self.client = client.Client( clientID )
+        self.client.on_connect = self.on_connect
+        self.client.on_message = self.on_message
+        self.client.connect(serverIP, 1883, 60)
+        self.client.subscribe(self.inTopic)
+        self.client.loop_start()
+        logger.info("finished starting")
 
-        self.t = threading.Thread(target=self.loop)
-        self.t.daemon = True
-        self.t.start()
 
-    def connect(self):
-        def on_message(obj, userdata, msg):
-            msg.payload = msg.payload.decode('utf-8')
-            logger.info("Message received on topic %s with QoS %i and payload %s"%(  msg.topic, msg.qos, msg.payload))
-            event = msg.payload.split( "|")
-            self.eventQueue.put(event);
-            
-        def on_disconnect(mosq, obj, rc):
-            if (rc==1):
-                logger.error("Disconnection unexpected")
-                self.connect()
+    # The callback for when the client receives a CONNACK response from the server.
+    def on_connect(self, client, userdata, flags, rc):
+        logger.info("Connected with result code "+str(rc))
+        # Subscribing in on_connect() means that if we lose the connection and
+        # reconnect then subscriptions will be renewed.
+        client.subscribe(self.inTopic)
 
-        def on_publish(obj, other, msg ):
-            logger.info( "completed publish %s " %( msg))
+    # The callback for when a PUBLISH message is received from the server.
+    def on_message(self, client, userdata, msg):
+        msg.payload = msg.payload.decode('utf-8')
+        logger.info("Message received on topic %s with QoS %i and payload %s"%(  msg.topic, msg.qos, msg.payload))
+        event = msg.payload.split( "|")
+        self.eventQueue.put(event);
 
-        retry=True
-        while ( retry ):
-            try:
-                self.client.connect(self.serverIP)  # pi
-                self.client.subscribe(self.inTopic, 0)
-                logger.info("Connecting, subscribing to topic %s" % (self.inTopic))
-                self.client.on_message = on_message
-                self.client.on_disconnect = on_disconnect
-                self.client.on_publish = on_publish
-                retry=False
-            except socket_error:
-                retry =  True
-                self.eventQueue.put([const.EVENT_MQTTERROR,"Retry MQTT connect"])
-                logger.error("Retrying MQTT connect")
-                time.sleep(5)
-
-        self.socketError = False 
                 
     def publish(self, topic, msg):
+        
         logger.info("Publishing msg %s with topic %s" %  (msg, topic))
         try:
-            self.client.publish(topic,msg)
+            publish.single(topic,msg, hostname= self.serverIP)
         except socket_error:
             self.eventQueue.put([const.EVENT_MQTTERROR,"socket error"])
             self.socketError = True
@@ -76,26 +64,18 @@ class MQTT:
             
 
 
-    def loop( self ):
-        while main_thread.is_alive():
-            if self.socketError:
-                logger.error("Socket Error Flag = %s in Loop" % (self.socketError))
-                self.connect()        
-                
-            self.client.loop()
-            time.sleep(2)
-
  
 if __name__ == "__main__":
     logging.basicConfig()
     import queue
     q = queue.Queue()
     logger.info('starting')
-    mqtt = MQTT(  "127.0.0.1", q, clientID="dispatcher", inTopic="dispatcher", outTopic="keypad" )
+    mqtt = MQTT(  "127.0.0.1", q, clientID="door", inTopic="dispatcher", outTopic="keypad" )
     while True:
+        time.sleep(3)
         logger.info('publishing')
         mqtt.publish( 'dispatcher', '0|123')
         logger.info('waiting')
         payload = q.get(True, 300)
         q.task_done()
-        print(payload)
+        logger.info(payload)
