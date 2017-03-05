@@ -47,10 +47,6 @@ class Pins:
         self.GPIO_output(wateringPins[ pinIndex ], P.ON)
         Timer(duration, self.disablePin, [ pinIndex ]).start()
         latestOffTime[ pinIndex ] = max( latestOffTime[ pinIndex ], time.time() + duration)
-        if pinIndex == lockPinIndex:
-            self.eventQueue.put([const.EVENT_UNLOCKED,pinIndex])
-        else:
-            self.eventQueue.put([const.EVENT_PINON,pinIndex])
 
 
     def disablePin(self,  pinIndex):
@@ -79,7 +75,10 @@ class Pins:
 
     def unlock(self, nseconds=8):
         self.enablePin(lockPinIndex, nseconds)
-        #blink1.startBlink(nseconds)
+
+    def lock(self):
+        latestOffTime[ lockPinIndex ] = -1
+        self.GPIO_output(wateringPins[ lockPinIndex ], P.OFF)
 
     def readTemperature( self ):
         return readTemp()

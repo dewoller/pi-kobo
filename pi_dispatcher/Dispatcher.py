@@ -41,39 +41,35 @@ def restart():
     process = subprocess.Popen(command.split(), stdout=subprocess.PIPE)
     output = process.communicate()[0]
 
-def processKeyCodes( payload):
+def processKeyCodes( keys):
     badMessage=False
 
-    logger.info("processing payload '%s'" % payload)
-    if payload == "3695147" :
-        pins.unlock()
-    elif payload == "" or payload == "X":
+    logger.info("processing keys '%s'" % keys)
+    if keys == "3695147" :
+    	unlockDoor( keys )
+    elif keys == "" or keys == "X":
         # z pressed
         webConnection.notifyNextTrain()
-    elif payload == "666":
+    elif keys == "666":
         sys.exit()
-    elif payload == "667":
+    elif keys == "667":
         LCDScreen.publish([5, "Rebooting"] )
         time.sleep(1)
         restart()
-    elif payload == "369":
-        pins.disableAllPins()
-        LCDScreen.publish([5, "All Pins Off"] )
-        mqtt.publish("water/0", "0")
-    elif payload[0:2] == "XY":
+    elif keys == "369":
+    	waterOff()
+    elif keys[0:2] == "XY":
         try:
-            pin = int(payload[2:3])
-            duration = int(payload[3:])
+            pin = int(keys[2:3])
+            duration = int(keys[3:])
         except ValueError:
             badMessage=True
         if pin<1 or pin > 3:
             badMessage=True
         if not badMessage: 
-            pins.water(pin, duration)
-            LCDScreen.publish([5, "Water zone #%s for  %s sec" % (pin, duration)])
-            mqtt.publish("water/%s" % pin, "%s" % duration)
+        	water(pin, duration)
         
-    elif payload == "147":
+    elif keys == "147":
         vals = pins.readTemperature()
         LCDScreen.publish([20,"Temperature:{:.1f} \nHumidity:   {:.1f}%".format(*vals)])
         mqtt.publish("sensor1/temperature","{:.1f}".format(vals[0]))
@@ -84,7 +80,7 @@ def processKeyCodes( payload):
 
     if badMessage:
         LCDScreen.publish([1, "What?"])
-        logger.warning( "incomprehensible message %s " %(payload))
+        logger.warning( "incomprehensible message %s " %(keys))
 
 
 
@@ -133,7 +129,7 @@ def dispatcherLoop( ):
                 logger.info("tag saved: %s " % payload[1])
                 music.playSong("beeps2")
             elif db.hasCard( payload[1]):
-                pins.unlock()
+                unlockDoor( payload[1] )
             else:
                 LCDScreen.publish([1, "I don't know that card"])
 
@@ -145,7 +141,6 @@ def dispatcherLoop( ):
                 currentStateIndex=currentStateIndex + 1
                 if currentStateIndex >1 :
                     LCDScreen.display("Current State %s" % currentStateIndex)
-
             else:
                 currentStateIndex=0
 
@@ -163,16 +158,18 @@ def dispatcherLoop( ):
         elif payload[0] == const.EVENT_PINOFF:
             LCDScreen.display("STOP WATER ZN %s" % payload[1] )
 
+        elif payload[0] == const.EVENT_WATER1:
+        	water(1, payload[1])
+        elif payload[0] == const.EVENT_WATER2:
+        	water(2, payload[1])
+        elif payload[0] == const.EVENT_WATER3:
+        	water(3, payload[1])
+        elif payload[0] == const.EVENT_WATEROFF:
+        	waterOff()
         elif payload[0] == const.EVENT_UNLOCKED:
-            LCDScreen.display("DOOR UNLOCKED " )
-            RFIDReader.lightOn(0)
-            music.playSong("long")
-            mqtt.publish("door", "unlocked")
-
+        	unlockDoor()
         elif payload[0] == const.EVENT_LOCKED:
-            LCDScreen.display("DOOR LOCKED " )
-            RFIDReader.lightOff(0)
-            music.stopPlay()
+        	lockDoor()
         elif payload[0] == const.EVENT_NEXTTRAIN:
             if payload[1] >= 0:
                 LCDScreen.display("NEXT TRAIN IN\n{minutes:.0f}:{seconds:.0f} ".format( minutes=payload[1]//60, seconds=payload[1]%60 ) )
@@ -183,6 +180,31 @@ def dispatcherLoop( ):
             logger.error("Unknown event: %s " % payload[0])
 
 
+def unlockDoor( howUnlocked ):
+	pins.unlock()
+	LCDScreen.display("DOOR UNLOCKED " )
+	RFIDReader.lightOn(0)
+	music.playSong("long")
+	mqtt.publish("door/unlocked", howUnlocked )
+
+def lockDoor( ): 
+	pins.lock()
+	LCDScreen.display("DOOR LOCKED " )
+	RFIDReader.lightOff(0)
+	music.stopPlay()
+
+def waterOff():
+	pins.disableAllPins()
+	LCDScreen.publish([5, "All Pins Off"] )
+	mqtt.publish("water/0", "0")
+
+def water( pin, duration ): 
+	if duration <0  :
+		pins.disable( pin )
+	else:
+		pins.water(pin, duration)
+		LCDScreen.publish([5, "Water zone #%s for  %s sec" % (pin, duration)])
+		mqtt.publish("water/%s" % pin, "%s" % duration)
             
 
 if __name__ == "__main__":
