@@ -66,6 +66,7 @@ class RFID():
                     eventName = sm130Val[ eventType ]
                 except KeyError:
                     logger.error("Key Error read from serial %s" % eventType)
+                    #self.readTag()  # dont care what happened, get back to reading tags
                     continue
 
                 if eventName == 'Firmware'  or eventName == 'Reset':
@@ -90,6 +91,7 @@ class RFID():
                 logger.error( "Other RFID error:")
                 time.sleep(.1)
                 logger.error(traceback.format_exc())
+                #self.readTag()  # dont care what happened, get back to reading tags
                 continue
         
     def send_command(self, command, payload=''):

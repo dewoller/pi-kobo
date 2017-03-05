@@ -23,10 +23,10 @@ if __name__ == '__main__' and __package__ is None:
     ch.setFormatter(formatter)
     logger.addHandler(ch)
 
-import fauxmo
 import threading
 import time
 from debounce_handler import debounce_handler
+import fauxmo
 
 # ---------- Network constants -----------
 MQTT_HOST = "127.0.0.1"
@@ -49,9 +49,6 @@ class alexaFauxmo():
         logger.info("Starting")
         self.eventQueue = eventQueue
 
-        t=threading.Thread( target=self.main )
-        t.daemon = True
-        t.start()
         # Startup the fauxmo server
         fauxmo.DEBUG = True
         self.p = fauxmo.poller()
@@ -64,6 +61,10 @@ class alexaFauxmo():
         for trig, port in TRIGGERS.items():
             fauxmo.fauxmo(trig, self.u, self.p, None, port, self.d)
 
+        t=threading.Thread( target=self.main )
+        t.daemon = True
+        t.start()
+
 
     def main( self ):
         # Loop and poll for incoming Echo requests
@@ -75,6 +76,7 @@ class alexaFauxmo():
                 time.sleep(0.1)
             except Exception as e:
                 logging.critical("Critical exception: " + str(e))
+                logger.critical(traceback.format_exc())
                 break
 
 
@@ -96,9 +98,9 @@ class device_handler(debounce_handler):
         elif name=="irrigate" and state==True:
             self.eventQueue.put([const.EVENT_WATER1,  300])
         elif name=="door" and state==True:
-            self.eventQueue.put([const.EVENT_UNLOCKED,  0])
+            self.eventQueue.put([const.EVENT_UNLOCK,  0])
         elif name=="door" and state==False:
-            self.eventQueue.put([const.EVENT_LOCKED,  0])
+            self.eventQueue.put([const.EVENT_LOCK,  0])
         elif (name=="irrigate" ) and state==False:
             self.eventQueue.put([const.EVENT_WATER1,  -1])
         elif (name=="water") and state==False:
@@ -117,7 +119,7 @@ def main( ):
         payload = q.get(True)
         q.task_done()
         logger.info( "got keys %s" % payload)
-        if payload[1]==const.EVENT_LOCKED:
+        if payload[1]==const.EVENT_LOCK:
             break
 
     

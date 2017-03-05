@@ -70,7 +70,7 @@ class Pins:
         self.enablePin(lockPinIndex, nseconds)
 
     def lock(self):
-        self.disablePin( locaPinIndex )
+        self.disablePin( lockPinIndex )
 
     def readTemperature( self ):
         return readTemp()

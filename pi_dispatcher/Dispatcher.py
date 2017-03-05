@@ -23,6 +23,7 @@ import Keypad
 import RFID
 import db
 import webConnect
+import alexaFauxmo as alexa
 
 #TODO; delete lcd.publish
 #TODO: convert messages to functional
@@ -36,6 +37,7 @@ keypad = Keypad.Keypad(q)
 music = Music.Music()
 RFIDReader = RFID.RFID(q)
 webConnection = webConnect.webConnect(q)
+alexa = alexa.alexaFauxmo( q )
 
 def restart():
     logger.info( "rebooting: %s" %( output ))
@@ -197,7 +199,7 @@ def waterOff():
 
 def water( pin, duration ): 
 	if duration <0  :
-		pins.disable( pin )
+		pins.disablePin( pin )
 	else:
 		pins.water(pin, duration)
 		LCDScreen.publish([5, "Water zone #%s for  %s sec" % (pin, duration)])
