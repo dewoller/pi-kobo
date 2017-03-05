@@ -24,6 +24,9 @@ import RFID
 import db
 import webConnect
 
+#TODO; delete lcd.publish
+#TODO: convert messages to functional
+
 q = queue.Queue()
 LCDScreen = LCD.LCD()
 mqtt = MQTT.MQTT(  "192.168.1.38", q, clientID="Dispatcher", inTopic="dispatcher", outTopic="keypad" )
@@ -51,7 +54,7 @@ def processKeyCodes( keys):
         # z pressed
         webConnection.notifyNextTrain()
     elif keys == "666":
-        sys.exit()
+        sys.exit( 1 )
     elif keys == "667":
         LCDScreen.publish([5, "Rebooting"] )
         time.sleep(1)
@@ -67,22 +70,16 @@ def processKeyCodes( keys):
         if pin<1 or pin > 3:
             badMessage=True
         if not badMessage: 
-        	water(pin, duration)
+            water(pin, duration)
         
     elif keys == "147":
-        vals = pins.readTemperature()
-        LCDScreen.publish([20,"Temperature:{:.1f} \nHumidity:   {:.1f}%".format(*vals)])
-        mqtt.publish("sensor1/temperature","{:.1f}".format(vals[0]))
-        mqtt.publish("sensor1/humidity","{:.1f}".format(vals[1]))
-        mqtt.publish("sensor1/dewpoint","{:.1f}".format(vals[2]))
+        getAndSendTemperature()
     else:
         badMessage=True
 
     if badMessage:
         LCDScreen.publish([1, "What?"])
         logger.warning( "incomprehensible message %s " %(keys))
-
-
 
 def startDispatcher( ):
     logger.info("inside startDispatcher")
@@ -113,7 +110,6 @@ def dispatcherLoop( ):
         
         # we have a task to do
         if payload[0] == const.EVENT_KEYS:
-            #LCDScreen.displayClear()
             processKeyCodes( payload[1])
 
         elif payload[0] == const.EVENT_TOUCHUP:
@@ -152,12 +148,6 @@ def dispatcherLoop( ):
             else:
                 saveRFID=False
 
-        elif payload[0] == const.EVENT_PINON:
-            LCDScreen.display("WATER ZN %s" % payload[1] )
-
-        elif payload[0] == const.EVENT_PINOFF:
-            LCDScreen.display("STOP WATER ZN %s" % payload[1] )
-
         elif payload[0] == const.EVENT_WATER1:
         	water(1, payload[1])
         elif payload[0] == const.EVENT_WATER2:
@@ -166,9 +156,9 @@ def dispatcherLoop( ):
         	water(3, payload[1])
         elif payload[0] == const.EVENT_WATEROFF:
         	waterOff()
-        elif payload[0] == const.EVENT_UNLOCKED:
+        elif payload[0] == const.EVENT_UNLOCK:
         	unlockDoor()
-        elif payload[0] == const.EVENT_LOCKED:
+        elif payload[0] == const.EVENT_LOCK:
         	lockDoor()
         elif payload[0] == const.EVENT_NEXTTRAIN:
             if payload[1] >= 0:
@@ -179,8 +169,15 @@ def dispatcherLoop( ):
         else:
             logger.error("Unknown event: %s " % payload[0])
 
+def getAndSendTemperature():
+    vals = pins.readTemperature()
+    LCDScreen.publish([20,"Temperature:{:.1f} \nHumidity:   {:.1f}%".format(*vals)])
+    mqtt.publish("sensor1/temperature","{:.1f}".format(vals[0]))
+    mqtt.publish("sensor1/humidity","{:.1f}".format(vals[1]))
+    mqtt.publish("sensor1/dewpoint","{:.1f}".format(vals[2]))
 
-def unlockDoor( howUnlocked ):
+
+def unlockDoor( howUnlocked = "Unknown" ):
 	pins.unlock()
 	LCDScreen.display("DOOR UNLOCKED " )
 	RFIDReader.lightOn(0)
