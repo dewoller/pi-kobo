@@ -23,7 +23,6 @@ import Keypad
 import RFID
 import db
 import webConnect
-import alexaFauxmo
 
 #TODO; delete lcd.publish
 #TODO: convert messages to functional
@@ -37,7 +36,6 @@ keypad = Keypad.Keypad(q)
 music = Music.Music()
 RFIDReader = RFID.RFID(q)
 webConnection = webConnect.webConnect(q)
-alexa = alexaFauxmo.alexaFauxmo( q )
 
 def restart():
     logger.info( "rebooting: %s" %( output ))
