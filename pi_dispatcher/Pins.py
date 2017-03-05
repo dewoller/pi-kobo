@@ -47,27 +47,16 @@ class Pins:
         self.GPIO_output(wateringPins[ pinIndex ], P.ON)
         Timer(duration, self.disablePin, [ pinIndex ]).start()
         latestOffTime[ pinIndex ] = max( latestOffTime[ pinIndex ], time.time() + duration)
-        if pinIndex == lockPinIndex:
-            self.eventQueue.put([const.EVENT_UNLOCKED,pinIndex])
-        else:
-            self.eventQueue.put([const.EVENT_PINON,pinIndex])
 
 
     def disablePin(self,  pinIndex):
         logger.info( "latestoff {} compared to time {} , pin {}".format( latestOffTime[ pinIndex ],time.time(), pinIndex))
-
-        if latestOffTime[ pinIndex ]-1 <= time.time():
-            self.GPIO_output(wateringPins[ pinIndex ], P.OFF)
-            if pinIndex == lockPinIndex:
-                self.eventQueue.put([const.EVENT_LOCKED,pinIndex])
-            else:
-                self.eventQueue.put([const.EVENT_PINOFF,pinIndex ])
+        latestOffTime[ pinIndex ] = -1
+        self.GPIO_output(wateringPins[ pinIndex ], P.OFF)
 
     def disableAllPins(self ):
         for pinIndex in range(len(wateringPins)):
-            latestOffTime[ pinIndex ] = -1
-            self.GPIO_output(wateringPins[ pinIndex ], P.OFF)
-
+            self.disablePin( pinIndex )
 
     def water(self, n, duration=120):
         # 0'th pin is lock mechanism, pins 1..3 are 
@@ -79,11 +68,12 @@ class Pins:
 
     def unlock(self, nseconds=8):
         self.enablePin(lockPinIndex, nseconds)
-        #blink1.startBlink(nseconds)
+
+    def lock(self):
+        self.disablePin( locaPinIndex )
 
     def readTemperature( self ):
         return readTemp()
-        #return [0,0,0]
 
     def cleanup( self ):
         GPIO.cleanup()
