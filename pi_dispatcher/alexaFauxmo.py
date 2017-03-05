@@ -26,7 +26,6 @@ if __name__ == '__main__' and __package__ is None:
 import fauxmo
 import threading
 import time
-import paho.mqtt.client as paho
 from debounce_handler import debounce_handler
 
 # ---------- Network constants -----------
@@ -74,7 +73,7 @@ class alexaFauxmo():
                 # Allow time for a ctrl-c to stop the process
                 self.p.poll(100)
                 time.sleep(0.1)
-            except Exception, e:
+            except Exception as e:
                 logging.critical("Critical exception: " + str(e))
                 break
 
@@ -118,7 +117,7 @@ def main( ):
         payload = q.get(True)
         q.task_done()
         logger.info( "got keys %s" % payload)
-        if payload[1]==const.EVENT_LOCK:
+        if payload[1]==const.EVENT_LOCKED:
             break
 
     
