@@ -62,7 +62,7 @@ def processKeyCodes( keys):
         time.sleep(1)
         restart()
     elif keys == "369":
-    	waterOff()
+    	AllWaterOff()
     elif keys[0:2] == "XY":
         try:
             pin = int(keys[2:3])
@@ -157,7 +157,7 @@ def dispatcherLoop( ):
         elif payload[0] == const.EVENT_WATER3:
         	water(3, payload[1])
         elif payload[0] == const.EVENT_WATEROFF:
-        	waterOff()
+        	AllWaterOff()
         elif payload[0] == const.EVENT_UNLOCK:
         	unlockDoor()
         elif payload[0] == const.EVENT_LOCK:
@@ -191,8 +191,9 @@ def lockDoor( ):
 	LCDScreen.display("DOOR LOCKED " )
 	RFIDReader.lightOff(0)
 	music.stopPlay()
+	mqtt.publish("door/locked")
 
-def waterOff():
+def AllWaterOff():
 	pins.disableAllPins()
 	LCDScreen.publish([5, "All Pins Off"] )
 	mqtt.publish("water/0", "0")
@@ -200,6 +201,8 @@ def waterOff():
 def water( pin, duration ): 
 	if duration <0  :
 		pins.disablePin( pin )
+		LCDScreen.publish([5, "Water zone #%s off " % (pin)])
+		mqtt.publish("water/%s/off" % pin )
 	else:
 		pins.water(pin, duration)
 		LCDScreen.publish([5, "Water zone #%s for  %s sec" % (pin, duration)])
