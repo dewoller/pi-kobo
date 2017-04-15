@@ -60,13 +60,13 @@ class RFID():
         logger.info("Inside RFID reader")
         while (main_thread.is_alive()):
             try:   ## make sure this thing does not crash due to transient electrical things
-                self.readTag()  # dont care what happened, get back to reading tags
+                ## maybe put self.readTag here so that we are really ALWAYS reading tags
                 (eventType, payload) = self.read_command( )
                 try:
                     eventName = sm130Val[ eventType ]
                 except KeyError:
                     logger.error("Key Error read from serial %s" % eventType)
-                    self.readTag()  # dont care what happened, get back to reading tags
+                    #self.readTag()  # dont care what happened, get back to reading tags
                     continue
 
                 if eventName == 'Firmware'  or eventName == 'Reset':
@@ -81,14 +81,17 @@ class RFID():
                         self.getNextTag()
                 elif (eventName == 'Halt') or (eventName == 'WritePort' ) :
                     time.sleep(.01)
+                    self.readTag() # get back to reading tags
                 else:
                     logger.error("Unhandled RFID event %s" % eventName)
+                    self.readTag()  # dont care what happened, get back to reading tags
             except KeyboardInterrupt:
                 System.exit(0)
             except Exception:
                 logger.error( "Other RFID error:")
                 time.sleep(.1)
                 logger.error(traceback.format_exc())
+                #self.readTag()  # dont care what happened, get back to reading tags
                 continue
         
     def send_command(self, command, payload=''):
