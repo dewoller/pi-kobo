@@ -46,6 +46,8 @@ class RFID():
         time.sleep(.1)
         self.resetRFID()
         time.sleep(.1)
+        self.getFirmwareVersion()
+        time.sleep(.1)
         self.readTag()
         self.currentWritePort = 0
         self.t = threading.Thread(target=self.reader)
@@ -162,7 +164,7 @@ def build_packet(command, payload):
 def bits( number ):
      return [int(i) for i in list(bin(number)[2:])]
 
-def main( ):
+def mai1( ):
     q=queue.Queue()
     sc = RFID(q)
     while True:
@@ -176,7 +178,17 @@ def main( ):
             logger.debug("Writing Port with %s" % i )
             sc.writePort( i )
             time.sleep(5)
-    
+
+def main():
+        q=queue.Queue()
+        sc = RFID(q)
+        while True:
+                time.sleep(3)
+                logger.info('TESTING: waiting in main testing harness loop')
+                payload = q.get(True, 3000)
+                q.task_done()
+                logger.info(payload)
+        
 if __name__ == '__main__':
     logger.setLevel(logging.DEBUG)
     ch = logging.StreamHandler(sys.stdout)

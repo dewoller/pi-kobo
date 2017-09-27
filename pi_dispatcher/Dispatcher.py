@@ -28,16 +28,16 @@ import alexaFauxmo as alexa
 #TODO; delete lcd.publish
 #TODO: convert messages to functional
 
-q = queue.Queue()
+eventQueue = queue.Queue()
 LCDScreen = LCD.LCD()
-mqtt = MQTT.MQTT(  "192.168.1.38", q, clientID="Dispatcher", inTopic="dispatcher", outTopic="keypad" )
+mqtt = MQTT.MQTT(  "192.168.1.38", eventQueue, clientID="Dispatcher", inTopic="dispatcher", outTopic="keypad" )
 mqtt.publish("door/dispatcher", "starting")
-pins =Pins.Pins( q )
-keypad = Keypad.Keypad(q)
+pins =Pins.Pins( eventQueue )
+keypad = Keypad.Keypad(eventQueue)
 music = Music.Music()
-RFIDReader = RFID.RFID(q)
-webConnection = webConnect.webConnect(q)
-alexa = alexa.alexaFauxmo( q )
+RFIDReader = RFID.RFID(eventQueue)
+webConnection = webConnect.webConnect(eventQueue)
+alexa = alexa.alexaFauxmo( eventQueue )
 
 def restart():
     logger.info( "rebooting: %s" %( output ))
@@ -56,7 +56,7 @@ def processKeyCodes( keys):
         # z pressed
         webConnection.notifyNextTrain()
     elif keys == "666":
-        sys.exit( 1 )
+        eventQueue.put(["restart",""])
     elif keys == "667":
         LCDScreen.publish([5, "Rebooting"] )
         time.sleep(1)
@@ -104,8 +104,8 @@ def dispatcherLoop( ):
     saveRFID=False
     while True:
         try:
-            payload = q.get(True, 300)
-            q.task_done()
+            payload = eventQueue.get(True, 300)
+            eventQueue.task_done()
         except queue.Empty as e:
             RFIDReader.readTag()   # maybe we have forgotten that we need to be reading tags
             continue
@@ -120,7 +120,10 @@ def dispatcherLoop( ):
         elif payload[0] == const.EVENT_TOUCHDOWN:
             pass
 
-        elif payload[0] == const.EVENT_RFID_HASTAG:
+        elif payload[0] == "restart":
+            system.exit(0)
+
+        elif payload[0] == const.EVENT_RFID_HASTAG or payload[0] == "door/rfid":
             logger.info("tag received: %s " % payload[1])
             if (saveRFID):
                 db.addCard( payload[1])
@@ -130,6 +133,7 @@ def dispatcherLoop( ):
                 unlockDoor( payload[1] )
             else:
                 LCDScreen.publish([1, "I don't know that card"])
+                mqtt.publish("door/unknownRFID",payload[1] )
 
         elif payload[0] == const.EVENT_TOUCHED:
             logger.info("touched received: %s " % payload[1])
@@ -150,17 +154,17 @@ def dispatcherLoop( ):
             else:
                 saveRFID=False
 
-        elif payload[0] == const.EVENT_WATER1:
+        elif payload[0] == const.EVENT_WATER1 or payload[0]=="water":
         	water(1, payload[1])
-        elif payload[0] == const.EVENT_WATER2:
+        elif payload[0] == const.EVENT_WATER2 or payload[0]=="water":
         	water(2, payload[1])
-        elif payload[0] == const.EVENT_WATER3:
+        elif payload[0] == const.EVENT_WATER3 or payload[0]=="water":
         	water(3, payload[1])
-        elif payload[0] == const.EVENT_WATEROFF:
+        elif payload[0] == const.EVENT_WATEROFF or payload[0]=="wateroff":
         	AllWaterOff()
-        elif payload[0] == const.EVENT_UNLOCK:
-        	unlockDoor()
-        elif payload[0] == const.EVENT_LOCK:
+        elif payload[0] == const.EVENT_UNLOCK or payload[0]=="unlock":
+        	unlockDoor( payload[1] )
+        elif payload[0] == const.EVENT_LOCK or payload[0]=="lock":
         	lockDoor()
         elif payload[0] == const.EVENT_NEXTTRAIN:
             if payload[1] >= 0:

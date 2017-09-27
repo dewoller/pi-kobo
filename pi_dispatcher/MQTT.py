@@ -40,17 +40,24 @@ class MQTT:
         logger.info("Connected with result code "+str(rc))
         # Subscribing in on_connect() means that if we lose the connection and
         # reconnect then subscriptions will be renewed.
-        client.subscribe(self.inTopic)
+        client.subscribe(self.inTopic + "/#")
 
     # The callback for when a PUBLISH message is received from the server.
+    # can be published as /inTopic/, message 0|keystrokes
+    # or /inTopic/subTopic, message details
     def on_message(self, client, userdata, msg):
         msg.payload = msg.payload.decode('utf-8')
         logger.info("Message received on topic %s with QoS %i and payload %s"%(  msg.topic, msg.qos, msg.payload))
-        event = msg.payload.split( "|")
+        event=['','']
+        if len( msg.topic ) == len( self.inTopic ):
+            event = msg.payload.split( "|")
+        else:
+            event[0] = msg.topic[ (len(self.inTopic )+1): ]  # strip out inTopic, leave the chunk at the end
+            event[1] = msg.payload
+
         self.eventQueue.put(event);
 
-                
-    def publish(self, topic, msg):
+    def publish(self, topic, msg=''):
         
         logger.info("Publishing msg %s with topic %s" %  (msg, topic))
         try:
@@ -74,7 +81,8 @@ if __name__ == "__main__":
     while True:
         time.sleep(3)
         logger.info('publishing')
-        mqtt.publish( 'dispatcher', '0|123')
+        mqtt.publish( 'dispatcher/unlock')
+        #mqtt.publish( 'dispatcher', '0|123')
         logger.info('waiting')
         payload = q.get(True, 300)
         q.task_done()
