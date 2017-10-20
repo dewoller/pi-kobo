@@ -56,7 +56,7 @@ class LCD():
         self.isLighted=False
 
     def publish( self, message ):
-        self.display( message[1] )
+        self.display( message )
 
     def display( self, message ):
         self.prepareWrite()

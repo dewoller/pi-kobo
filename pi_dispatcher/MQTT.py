@@ -49,11 +49,10 @@ class MQTT:
         msg.payload = msg.payload.decode('utf-8')
         logger.info("Message received on topic %s with QoS %i and payload %s"%(  msg.topic, msg.qos, msg.payload))
         event=['','']
-        if len( msg.topic ) == len( self.inTopic ):
-            event = msg.payload.split( "|")
-        else:
-            event[0] = msg.topic[ (len(self.inTopic )+1): ]  # strip out inTopic, leave the chunk at the end
-            event[1] = msg.payload
+        # strip out inTopic, leave the chunk at the end as the payload 
+        # e.g. dispatcher/water/balcony, 600
+        event[0] = msg.topic[ (len(self.inTopic )+1): ]  
+        event[1] = msg.payload
 
         self.eventQueue.put(event);
 

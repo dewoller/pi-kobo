@@ -35,26 +35,16 @@ class Keypad():
         t.start()
 
     def main( self):
-        result=''
         last_touched=0
         while ( main_thread.is_alive() ):
                 try:
                     current_touched = self.cap.touched()
-                    if current_touched!=last_touched:
-                        self.eventQueue.put([const.EVENT_TOUCHED,  current_touched])
                     for i in range(12):
                         pin_bit = 1 << i
                         key=keymap[i]
-                        if current_touched & pin_bit and not last_touched & pin_bit:
-                            self.eventQueue.put([const.EVENT_TOUCHDOWN,  key])
                         if not current_touched & pin_bit and last_touched & pin_bit:
                             self.eventQueue.put([const.EVENT_TOUCHUP,  key])
-                            if key=='Z':
-                                self.eventQueue.put([const.EVENT_KEYS,  result])
-                                result=""
-                            else:
-                                result = result + key
-                            logger.debug( "key pressed '%s', current result '%s'" % (key, result) )
+                            logger.debug( "key pressed '%s'" % (key) )
                     last_touched = current_touched
                     time.sleep(.01)
                 except KeyboardInterrupt:
