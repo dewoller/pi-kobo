@@ -31,10 +31,9 @@ class webConnect():
 
         try:
             self.getNextTrains()
-        except ValueError:
-            pass
-
-        self.scheduleNextNotification()
+            self.scheduleNextNotification()
+        except Exception:
+            pass # I don't care if trains dont work
     
     def getNextTrains( self ):
         self.nextTrains = []

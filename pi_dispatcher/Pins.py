@@ -50,7 +50,7 @@ class Pins:
 
 
     def disablePin(self,  pinIndex):
-        logger.info( "latestoff {} compared to time {} , pin {}".format( latestOffTime[ pinIndex ],time.time(), pinIndex))
+        logger.info( "Disabling pin {} latestoff {} compared to time {}  ".format( pinIndex, latestOffTime[ pinIndex ],time.time()))
         latestOffTime[ pinIndex ] = -1
         self.GPIO_output(wateringPins[ pinIndex ], P.OFF)
 

@@ -29,7 +29,7 @@ import alexaFauxmo as alexa
 #TODO: convert messages to functional
 
 
-pinNames =  [ "water/alley", "water/parking", "water/balcony"]
+pinNames =  [ "water/alley", "water/balcony"]
 
 baseOutTopic = "door"
 eventQueue = queue.Queue()
@@ -115,8 +115,9 @@ def dispatcherLoop( ):
             saveRFID=False
             savedKeys=""
             continue
-        logger.info("processing event %s payload %s", payload ) 
+        logger.info("processing event %s payload %s", payload[0], payload[1] ) 
 
+        # access pins by name
         pinIndex =  -1
         try:
             pinIndex =  pinNames.index( payload[0] ) + 1
@@ -162,9 +163,7 @@ def dispatcherLoop( ):
         elif pinIndex > 0:
         	water(pinIndex, payload[1], payload[0])
         elif payload[0] == const.EVENT_WATER1  or payload[0]=="water1":
-        	water(1, payload[1], "balcony")
-        elif payload[0] == const.EVENT_WATER2 or payload[0]=="water2":
-        	water(2, payload[1], "parking")
+        	water(2, payload[1], "balcony")
         elif payload[0] == const.EVENT_WATER3  or payload[0]=="water3":
         	water(3, payload[1], "alley")
         elif payload[0] == const.EVENT_WATEROFF or payload[0]=="water/off":
