@@ -44,9 +44,13 @@ class Pins:
         GPIO.output(pin, what)
 
     def enablePin( self, pinIndex, duration=20):
-        self.GPIO_output(wateringPins[ pinIndex ], P.ON)
-        Timer(duration, self.disablePin, [ pinIndex ]).start()
         latestOffTime[ pinIndex ] = max( latestOffTime[ pinIndex ], time.time() + duration)
+        thread.start_new_thread(self.keepPinEnabled, (pinIndex, ))
+
+    def keepPinEnabled( self, pinIndex):
+        while (latestOffTime[ pinIndex ] < time.time() ):
+            self.GPIO_output(wateringPins[ pinIndex ], P.ON)
+            sleep(1)
 
 
     def disablePin(self,  pinIndex):
