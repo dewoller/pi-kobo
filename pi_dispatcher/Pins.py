@@ -2,6 +2,7 @@
 import time
 import queue
 from threading import Timer
+import _thread
 from functools import partial
 from sht1x.Sht1x import Sht1x as SHT1x
 import logging
@@ -37,20 +38,30 @@ class Pins:
         self.disableAllPins()
 
     def GPIO_output( self, pin, what):
-        logger.info( "setting pin {} to state {} ".format( pin, what))
+        logger.debug( "setting pin {} to state {} ".format( pin, what))
         GPIO.setmode(GPIO.BOARD)
         GPIO.setwarnings( False )
         GPIO.setup(pin, GPIO.OUT)
         GPIO.output(pin, what)
 
     def enablePin( self, pinIndex, duration=20):
-        latestOffTime[ pinIndex ] = max( latestOffTime[ pinIndex ], time.time() + duration)
-        thread.start_new_thread(self.keepPinEnabled, (pinIndex, ))
+        logger.info( "trying to enable pin {} ".format( pinIndex))
 
-    def keepPinEnabled( self, pinIndex):
-        while (latestOffTime[ pinIndex ] < time.time() ):
+        toStartThread = False
+        if (latestOffTime[ pinIndex ] < 0 ) :  # was off, need to turn on and keep on
+            toStartThread = True
+
+        latestOffTime[ pinIndex ] = max( latestOffTime[ pinIndex ], time.time() + duration)
+        if ( toStartThread ) :
+            logger.info( "actually enabling pin {} ".format( pinIndex))
+            _thread.start_new_thread(self.persistPinEnabled, (pinIndex, ))
+
+    def persistPinEnabled( self, pinIndex):
+        logger.debug( "initial checking pin {} latestoff {} compared to time {}  ".format( pinIndex, latestOffTime[ pinIndex ],time.time()))
+        while (latestOffTime[ pinIndex ] > time.time() ):
             self.GPIO_output(wateringPins[ pinIndex ], P.ON)
-            sleep(1)
+            time.sleep(1)
+        self.disablePin( pinIndex )
 
 
     def disablePin(self,  pinIndex):

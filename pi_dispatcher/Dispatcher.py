@@ -61,6 +61,7 @@ def processKeyCodes( keys):
     elif keys == "" or keys == "X":
         # z pressed
         webConnection.notifyNextTrain()
+        pass
     elif keys == "666":
         eventQueue.put(["restart",""])
     elif keys == "369":
