@@ -1,0 +1,5 @@
+#!/bin/bash
+
+date >>/tmp/motionEventDetected
+ls /securityCamera/incoming | wc -l  >>/tmp/motionEventDetected
+
