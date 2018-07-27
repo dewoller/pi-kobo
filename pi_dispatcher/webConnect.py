@@ -54,6 +54,7 @@ class webConnect():
                     and 
                 (
                     train['run']['destination_name'] == "Flinders Street"
+                    or train['run']['destination_name'] == "Clifton Hill"
                     or train['run']['destination_name'] == "Parliament"
                     or train['run']['destination_name'] == "Heidelberg"
                 )):

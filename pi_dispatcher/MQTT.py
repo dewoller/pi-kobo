@@ -15,6 +15,7 @@ import const
 # any incoming messages get put into the eventQueue
 # outgoing messages call publish direclty
 
+BASE_TOPIC="dispatcher_info/"
 
 
 
@@ -60,7 +61,7 @@ class MQTT:
         
         logger.info("Publishing msg %s with topic %s" %  (msg, topic))
         try:
-            publish.single(topic,msg, hostname= self.serverIP)
+            publish.single(BASE_TOPIC + topic,msg, hostname= self.serverIP)
         except socket_error:
             self.eventQueue.put([const.EVENT_MQTTERROR,"socket error"])
             self.socketError = True

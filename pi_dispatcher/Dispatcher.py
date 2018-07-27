@@ -40,7 +40,7 @@ pins =Pins.Pins( eventQueue )
 keypad = Keypad.Keypad(eventQueue)
 music = Music.Music()
 #RFIDReader = RFID.RFID(eventQueue)
-webConnection = webConnect.webConnect(eventQueue)
+#webConnection = webConnect.webConnect(eventQueue)
 alexa = alexa.alexaFauxmo( eventQueue )
 
 def restart():
@@ -60,7 +60,7 @@ def processKeyCodes( keys):
         eventQueue.put(["door/saveRFID",""])
     elif keys == "" or keys == "X":
         # z pressed
-        webConnection.notifyNextTrain()
+        #webConnection.notifyNextTrain()
         pass
     elif keys == "666":
         eventQueue.put(["restart",""])
