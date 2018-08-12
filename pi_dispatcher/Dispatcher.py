@@ -34,7 +34,7 @@ pinNames =  [ "water/alley", "water/balcony"]
 baseOutTopic = "door"
 eventQueue = queue.Queue()
 LCDScreen = LCD.LCD()
-mqtt = MQTT.MQTT(  "192.168.1.38", eventQueue, clientID="Dispatcher", inTopic="dispatcher", outTopic="keypad" )
+mqtt = MQTT.MQTT(  "127.0.0.1", eventQueue, clientID="Dispatcher", inTopic="dispatcher", outTopic="keypad" )
 mqtt.publish(baseOutTopic, "starting")
 pins =Pins.Pins( eventQueue )
 keypad = Keypad.Keypad(eventQueue)

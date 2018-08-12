@@ -25,40 +25,61 @@ class LCD():
         # Configuration parameters
         # I2C Address, Port, Enable pin, RW pin, RS pin, Data 4 pin, Data 5 pin, Data 6 pin, Data 7 pin, Backlight pin (optional)
         logger.info("Starting")
-        self.lcd = i2c_lcd_smbus.i2c_lcd(0x27,1, 2, 1, 0, 4, 5, 6, 7, 3)
+        try:
+            self.lcd = i2c_lcd_smbus.i2c_lcd(0x27,1, 2, 1, 0, 4, 5, 6, 7, 3)
 
-        # If you want to disable the cursor, uncomment the following line
-        self.lcd.command(self.lcd.CMD_Display_Control | self.lcd.OPT_Enable_Display)
-        self.lcd.backLightOn()
+            # If you want to disable the cursor, uncomment the following line
+            self.lcd.command(self.lcd.CMD_Display_Control | self.lcd.OPT_Enable_Display)
+            self.lcd.backLightOn()
+        except IOError:
+            self.lcd = None   # communication error with screen;  giveup
+            logger.info("Cant connect to LCD screen")
+
         self.isLighted=True
         self.lastDisplayTime=time.time()
         self.timer = self.initializeTimer()
         self.pos=0
         
     def displayChar( self, char ):
+
+        if (self.lcd == None):
+            return
+
         self.prepareWrite()
         if self.pos==0:
             self.displayClear()
-
-        self.lcd.setPosition(self.pos // 16+1,self.pos % 16)
-        self.lcd.writeString( char )
+        if (a != None):
+            self.lcd.setPosition(self.pos // 16+1,self.pos % 16)
+            self.lcd.writeString( char )
         self.pos=self.pos+len(char)
         if self.pos>=32:
             self.pos=0
 
     def displayClear( self) :
+        if (self.lcd == None):
+            return
+
         self.prepareWrite()
         self.lcd.clear()
         self.pos=0
 
     def displayOff( self) :
+        if (self.lcd == None):
+            return
+
         self.lcd.backLightOff()
         self.isLighted=False
 
     def publish( self, message ):
+        if (self.lcd == None):
+            return
+
         self.display( message )
 
     def display( self, message ):
+        if (self.lcd == None):
+            return
+
         self.prepareWrite()
         self.displayClear()
         if "\n" in message:
@@ -71,18 +92,27 @@ class LCD():
         self.displayLine2(ln2)
 
     def displayLine1( self, message) :
+        if (self.lcd == None):
+            return
+
         self.pos=0
         self.prepareWrite()
         self.lcd.home()
         self.lcd.writeString( message )
 
     def displayLine2( self, message) :
+        if (self.lcd == None):
+            return
+
         self.pos=0
         self.prepareWrite()
         self.lcd.setPosition(2, 0) 
         self.lcd.writeString( message ) 
 
     def prepareWrite( self):
+        if (self.lcd == None):
+            return
+
         if not self.isLighted:
             self.lcd.backLightOn()
             self.isLighted=True

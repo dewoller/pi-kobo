@@ -4,7 +4,8 @@ import queue
 from threading import Timer
 import _thread
 from functools import partial
-from sht1x.Sht1x import Sht1x as SHT1x
+#from sht1x.Sht1x import Sht1x as SHT1x
+from pi_sht1x import SHT1x
 import logging
 logger = logging.getLogger(__name__)
 import const
@@ -23,7 +24,7 @@ GPIO.setmode(GPIO.BOARD)
 
 sht1x_dataPin = 22
 sht1x_clkPin = 18
-sht1x = SHT1x(sht1x_dataPin, sht1x_clkPin, SHT1x.GPIO_BOARD)
+#sht1x = SHT1x(sht1x_dataPin, sht1x_clkPin, SHT1x.GPIO_BOARD)
 
 class P():
     OFF=GPIO.HIGH
@@ -94,17 +95,15 @@ class Pins:
         GPIO.cleanup()
 
 def readTemp( ):
-    temperature = 0
-    humidity = 0
-    dewPoint=0
-    GPIO.setmode(GPIO.BOARD) 
-    temperature = sht1x.read_temperature_C()
-    humidity = sht1x.read_humidity()
-    dewPoint=0
-    dewPoint = sht1x.calculate_dew_point(temperature, humidity)
-    
-    logger.info("Temperature: {} Humidity: {} Dew Point: {}".format(temperature, humidity, dewPoint))
-    return [temperature, humidity, dewPoint]
+
+    with SHT1x(sht1x_clkPin , sht1x_dataPin , gpio_mode=GPIO.BOARD) as sensor:
+        temp = sensor.read_temperature()
+        humidity = sensor.read_humidity(temp)
+        sensor.calculate_dew_point(temp, humidity)
+        print(sensor)
+
+        logger.info("Temperature: {} ".format(sensor))
+        return [sensor]
    
  
 GPIO.setmode(GPIO.BOARD)

@@ -27,12 +27,16 @@ class Keypad():
         logger.info("Starting")
         self.cap = MPR121.MPR121()
         self.eventQueue = eventQueue
+        try:
+            self.cap.begin()
+        except OSError:
+            logger.info( 'Error initializing MPR121.  Check your wiring!')
+            self.cap = None
 
-        if not self.cap.begin():
-            print( 'Error initializing MPR121.  Check your wiring!')
-        t=threading.Thread( target=self.main )
-        t.daemon = True
-        t.start()
+        if (self.cap != None):
+            t=threading.Thread( target=self.main )
+            t.daemon = True
+            t.start()
 
     def main( self):
         last_touched=0
