@@ -28,6 +28,8 @@ cpan Net:SSLeay
 cpan Forecast::IO
 
 
+sudo ufw allow 1883
+
 sudo pip3 install smbus-cffi python3-requests python3-dateutil
 sudo pip3 install git+https://github.com/drohm/pi-sht1x  
 

@@ -39,7 +39,6 @@ mqtt.publish(baseOutTopic, "starting")
 pins =Pins.Pins( eventQueue )
 keypad = Keypad.Keypad(eventQueue)
 music = Music.Music()
-#RFIDReader = RFID.RFID(eventQueue)
 #webConnection = webConnect.webConnect(eventQueue)
 alexa = alexa.alexaFauxmo( eventQueue )
 
@@ -193,14 +192,12 @@ def getAndSendTemperature():
 def unlockDoor( howUnlocked = "Unknown" ):
 	pins.unlock()
 	LCDScreen.display("DOOR UNLOCKED " )
-	#RFIDReader.lightOn(0)
 	music.playSong("long")
 	mqtt.publish( baseOutTopic + "/unlocked", howUnlocked )
 
 def lockDoor( ): 
 	pins.lock()
 	LCDScreen.display("DOOR LOCKED " )
-	#RFIDReader.lightOff(0)
 	music.stopPlay()
 	mqtt.publish( baseOutTopic + "/locked")
 

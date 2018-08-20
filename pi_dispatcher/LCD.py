@@ -48,9 +48,9 @@ class LCD():
         self.prepareWrite()
         if self.pos==0:
             self.displayClear()
-        if (a != None):
-            self.lcd.setPosition(self.pos // 16+1,self.pos % 16)
-            self.lcd.writeString( char )
+            
+        self.lcd.setPosition(self.pos // 16+1,self.pos % 16)
+        self.lcd.writeString( char )
         self.pos=self.pos+len(char)
         if self.pos>=32:
             self.pos=0
