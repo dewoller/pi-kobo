@@ -69,6 +69,10 @@ class Pins:
         logger.info( "Disabling pin {} latestoff {} compared to time {}  ".format( pinIndex, latestOffTime[ pinIndex ],time.time()))
         latestOffTime[ pinIndex ] = -1
         self.GPIO_output(wateringPins[ pinIndex ], P.OFF)
+        if pinIndex ==0 :
+            eventQueue.put([const.MQTT_MESSAGE, 'door unlock'  ])
+        else:
+            eventQueue.put([const.MQTT_MESSAGE, 'water off pin # {}" % pinIndex])
 
     def disableAllPins(self ):
         for pinIndex in range(len(wateringPins)):
