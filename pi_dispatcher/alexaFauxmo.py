@@ -31,17 +31,25 @@ import fauxmo
 # ---------- Network constants -----------
 MQTT_HOST = "127.0.0.1"
 MQTT_PORT = 1883
+LIGHT_TOPIC="/command/lights/"
 # ---------- Network constants -----------
 
 logging.basicConfig(level=logging.DEBUG)
 
 import const
 main_thread = threading.current_thread()
+
 TRIGGERS = {
           "water":      52000
         , "door":       52001
         , "irrigate":   52002
-        }
+        ,"hall":6400
+        ,"downstairs":13979
+        ,"entry":13972
+        ,"upstairs":19303
+        ,"kitchen":10550
+        ,"tv":8500
+                }
 
 
 class alexaFauxmo():
@@ -105,7 +113,11 @@ class device_handler(debounce_handler):
             self.eventQueue.put([const.EVENT_WATER1,  -1])
         elif (name=="water") and state==False:
             self.eventQueue.put([const.EVENT_WATER3,  -1])
-
+        elif state == True:
+            mqtt.publish( TRIGGERS[ name ], msg='on', base_topic = LIGHT_TOPIC)
+        else:
+            mqtt.publish( TRIGGERS[ name ], msg='off', base_topic = LIGHT_TOPIC)
+        
         return True
 
 
