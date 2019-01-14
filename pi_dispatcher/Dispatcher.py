@@ -35,7 +35,7 @@ baseOutTopic = "home/dispatcher"
 eventQueue = queue.Queue()
 LCDScreen = LCD.LCD()
 mqtt = MQTT.MQTT(  "127.0.0.1", eventQueue, clientID="dispatcher")
-mqtt.publish(baseOutTopic + "/starting")
+mqtt.publish(baseOutTopic + "/all",'{"info": "starting"}')
 pins =Pins.Pins( eventQueue )
 keypad = Keypad.Keypad(eventQueue)
 music = Music.Music()
@@ -138,7 +138,7 @@ def dispatcherLoop( ):
             restart()
 
         elif payload[0] == "door/saveRFID":
-            mqtt.publish(baseOutTopic + "/saveRFID", "" )
+            mqtt.publish(baseOutTopic + "/saveRFID")
             LCDScreen.publish( "Saving RFID")
             music.playSong("beeps1")
             saveRFID=True
@@ -146,16 +146,16 @@ def dispatcherLoop( ):
             logger.info("tag received: %s " % payload[1])
             if db.hasCard( payload[1]):
                 logger.info("tag found: %s " % payload[1])
-                mqtt.publish(baseOutTopic + "/usedTag", payload[1] )
+                mqtt.publish(baseOutTopic + "/usedTag", '{"payload":"' + payload[1] + '"}' )
                 unlockDoor( payload[1] )
             elif (saveRFID):
                 db.addCard( payload[1])
                 logger.info("tag saved: %s " % payload[1])
-                mqtt.publish(baseOutTopic + "/savedRFID", payload[1] )
+                mqtt.publish(baseOutTopic + "/savedRFID", '{"payload":"' + payload[1] + '"}' )
                 music.playSong("beeps2")
             else:
                 LCDScreen.publish( "Unknown RFID tag")
-                mqtt.publish(baseOutTopic + "/unknownRFID",payload[1] )
+                mqtt.publish(baseOutTopic + "/unknownRFID",'{"payload":"' + payload[1] + '"}' )
             saveRFID=False
 
         elif  payload[0] == "door/temperature":
@@ -186,7 +186,8 @@ def dispatcherLoop( ):
 def getAndSendTemperature():
     vals = pins.readTemperature()
     LCDScreen.publish("Temperature:{:.1f} \nHumidity:   {:.1f}%".format(*vals))
-    mqtt.publish( baseOutTopic + "/all/temperature","{:.1f}".format(vals[0]))
+    #TODO make it all JSON
+    mqtt.publish( baseOutTopic + "/all/weather","{:.1f}".format(vals[0]))
     mqtt.publish( baseOutTopic + "/all/humidity","{:.1f}".format(vals[1]))
     mqtt.publish( baseOutTopic + "/all/dewpoint","{:.1f}".format(vals[2]))
 
