@@ -29,13 +29,13 @@ import alexaFauxmo as alexa
 #TODO: convert messages to functional
 
 
-pinNames =  [ "water/alley", "water/balcony"]
+pinNames =  [ "alley/water", "balcony/water"]
 
-baseOutTopic = "door"
+baseOutTopic = "home/dispatcher"
 eventQueue = queue.Queue()
 LCDScreen = LCD.LCD()
-mqtt = MQTT.MQTT(  "127.0.0.1", eventQueue, clientID="Dispatcher", inTopic="dispatcher", outTopic="keypad" )
-mqtt.publish(baseOutTopic, "starting")
+mqtt = MQTT.MQTT(  "127.0.0.1", eventQueue, clientID="dispatcher")
+mqtt.publish(baseOutTopic + "/starting")
 pins =Pins.Pins( eventQueue )
 keypad = Keypad.Keypad(eventQueue)
 music = Music.Music()
@@ -184,38 +184,38 @@ def dispatcherLoop( ):
 def getAndSendTemperature():
     vals = pins.readTemperature()
     LCDScreen.publish("Temperature:{:.1f} \nHumidity:   {:.1f}%".format(*vals))
-    mqtt.publish( baseOutTopic + "/sensor1/temperature","{:.1f}".format(vals[0]))
-    mqtt.publish( baseOutTopic + "/sensor1/humidity","{:.1f}".format(vals[1]))
-    mqtt.publish( baseOutTopic + "/sensor1/dewpoint","{:.1f}".format(vals[2]))
+    mqtt.publish( baseOutTopic + "/all/temperature","{:.1f}".format(vals[0]))
+    mqtt.publish( baseOutTopic + "/all/humidity","{:.1f}".format(vals[1]))
+    mqtt.publish( baseOutTopic + "/all/dewpoint","{:.1f}".format(vals[2]))
 
 
 def unlockDoor( howUnlocked = "Unknown" ):
 	pins.unlock()
 	LCDScreen.display("DOOR UNLOCKED " )
 	music.playSong("long")
-	mqtt.publish( baseOutTopic + "/unlocked", howUnlocked )
+	mqtt.publish( baseOutTopic + "/all/unlocked", howUnlocked )
 
 def lockDoor( ): 
 	pins.lock()
 	LCDScreen.display("DOOR LOCKED " )
 	music.stopPlay()
-	mqtt.publish( baseOutTopic + "/locked")
+	mqtt.publish( baseOutTopic + "/all/locked")
 
 def AllWaterOff():
 	pins.disableAllPins()
 	LCDScreen.publish( "All Pins Off" )
-	mqtt.publish("water/all/off", "0")
+	mqtt.publish(baseOutTopic + "/all/water/off", "0")
 
 def water( pin, duration, where="unknown"): 
     duration = int(duration)
     if duration <0  :
             pins.disablePin( pin )
             LCDScreen.publish( "Water #%s off " % (where))
-            mqtt.publish("water/%s/off" % where )
+            mqtt.publish(baseOutTopic + "/all/%s/off" % where )
     else:
             pins.water(pin, duration)
             LCDScreen.publish( "Water #%s for  %s sec" % (where, duration))
-            mqtt.publish("water/%s/on" % where, "%s" % duration)
+            mqtt.publish(baseOutTopic + "/all/%s/%s" % (where,  duration))
             
 
 if __name__ == "__main__":
