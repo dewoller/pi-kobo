@@ -23,39 +23,56 @@ keymap=['1','2','3','X','4','5','6','Y','7','8','9','Z']
 
 class Keypad():
     def __init__(self, eventQueue):
-        # Create MPR121 instance.
         logger.info("Starting")
-        self.cap = MPR121.MPR121()
         self.eventQueue = eventQueue
-        try:
-            self.cap.begin()
-        except OSError:
-            logger.info( 'Error initializing MPR121.  Check your wiring!')
-            self.cap = None
+        self.cap = None
+        t=threading.Thread( target=self.main )
+        t.daemon = True
+        t.start()
 
-        if (self.cap != None):
-            t=threading.Thread( target=self.main )
-            t.daemon = True
-            t.start()
+
+    def getCap( self ):
+        cap = None
+        sleep_time=1
+        while (cap == None):
+            try:
+                # Create MPR121 instance.
+                cap = MPR121.MPR121()
+                cap.begin()
+            except OSError:
+                logger.info( 'Error initializing MPR121.  Check your wiring!')
+                cap=None
+            except Exception:
+                logger.error( "Other Keyboard error:")
+                logger.error(traceback.format_exc())
+                cap=None
+            if (cap==None):
+                time.sleep( sleep_time -1)
+                sleep_time = sleep_time * 2
+
+        return(cap)
 
     def main( self):
         last_touched=0
         while ( main_thread.is_alive() ):
-                try:
-                    current_touched = self.cap.touched()
-                    for i in range(12):
-                        pin_bit = 1 << i
-                        key=keymap[i]
-                        if not current_touched & pin_bit and last_touched & pin_bit:
-                            self.eventQueue.put([const.EVENT_TOUCHUP,  key])
-                            logger.debug( "key pressed '%s'" % (key) )
-                    last_touched = current_touched
-                    time.sleep(.01)
-                except KeyboardInterrupt:
-                    System.exit(0)
-                except Exception:
-                    logger.error( "Other Keyboard error:")
-                    logger.error(traceback.format_exc())
+            if (self.cap == None):
+                self.cap=self.getCap()
+            try:
+                current_touched = self.cap.touched()
+                for i in range(12):
+                    pin_bit = 1 << i
+                    key=keymap[i]
+                    if not current_touched & pin_bit and last_touched & pin_bit:
+                        self.eventQueue.put([const.EVENT_TOUCHUP,  key])
+                        logger.debug( "key pressed '%s'" % (key) )
+                last_touched = current_touched
+                time.sleep(.01)
+            except KeyboardInterrupt:
+                System.exit(0)
+            except Exception:
+                logger.error( "Other Keyboard error:")
+                logger.error(traceback.format_exc())
+                self.cap=None
 
 def main( ):
     import queue
