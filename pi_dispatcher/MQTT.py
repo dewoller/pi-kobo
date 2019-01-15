@@ -16,7 +16,7 @@ import const
 # any incoming messages get put into the eventQueue
 # outgoing messages call publish direclty
 
-BASE_TOPIC="dispatcher_info/#"
+BASE_TOPIC="dispatcher/#"
 BASE_TOPIC_NEW="home/+/dispatcher/#"
 
 
@@ -32,7 +32,12 @@ class MQTT:
         self.client.connect(serverIP, 1883, 60)
         self.client.loop_start()
         logger.info("finished starting")
+        self.client.on_disconnect = self.on_disconnect
+        self.client.loop_start()
 
+    def on_disconnect(self, client, userdata, rc):
+        if rc != 0:
+            logger.error("could not connect, will retry")
 
     # The callback for when the client receives a CONNACK response from the server.
     def on_connect(self, client, userdata, flags, rc):
@@ -40,8 +45,8 @@ class MQTT:
         # reconnect then subscriptions will be renewed.
         
         if (rc==0): 
-            client.subscribe( BASE_TOPIC_NEW)
-            client.subscribe( BASE_TOPIC)
+            client.subscribe( BASE_TOPIC_NEW )
+            client.subscribe( BASE_TOPIC )
         else:
             logger.error("no connection to MQTT server possible")
             logger.error("Connected with result code "+str(rc))

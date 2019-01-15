@@ -4,6 +4,7 @@ import sys
 from subprocess import call
 import string
 import time
+import json
 
 import logging, logging.handlers, logging.config
 logging.config.fileConfig('log.conf' )
@@ -26,7 +27,6 @@ import webConnect
 import alexaFauxmo as alexa
 
 #TODO; delete lcd.publish
-#TODO: convert messages to functional
 
 
 pinNames =  [ "alley/water", "balcony/water"]
@@ -35,7 +35,7 @@ baseOutTopic = "home/dispatcher"
 eventQueue = queue.Queue()
 LCDScreen = LCD.LCD()
 mqtt = MQTT.MQTT(  "127.0.0.1", eventQueue, clientID="dispatcher")
-mqtt.publish(baseOutTopic + "/all",'{"info": "starting"}')
+mqtt.publish(baseOutTopic + "/all/notification",json.dumps({"information": "starting"}))
 pins =Pins.Pins( eventQueue )
 keypad = Keypad.Keypad(eventQueue)
 music = Music.Music()
@@ -54,7 +54,7 @@ def processKeyCodes( keys):
 
     logger.info("processing keys '%s'" % keys)
     if keys == "3695147" :
-    	unlockDoor( keys )
+        unlockDoor( keys )
     elif keys == "7415963" :
         eventQueue.put(["door/saveRFID",""])
     elif keys == "" or keys == "X":
@@ -64,7 +64,7 @@ def processKeyCodes( keys):
     elif keys == "666":
         eventQueue.put(["restart",""])
     elif keys == "369":
-    	AllWaterOff()
+        AllWaterOff()
     elif keys[0:2] == "XY":
         try:
             pin = int(keys[2:3])
@@ -75,7 +75,7 @@ def processKeyCodes( keys):
             badMessage=True
         if not badMessage: 
             water(pin, duration)
-        
+
     elif keys == "147":
         eventQueue.put(["door/temperature",""])
     else:
@@ -138,42 +138,42 @@ def dispatcherLoop( ):
             restart()
 
         elif payload[0] == "door/saveRFID":
-            mqtt.publish(baseOutTopic + "/saveRFID")
             LCDScreen.publish( "Saving RFID")
+            mqtt.publish(baseOutTopic + "/all/notification", json.dumps( { "action": "waiting2saveRFID" } ))
             music.playSong("beeps1")
             saveRFID=True
         elif  payload[0] == "door/rfid":
             logger.info("tag received: %s " % payload[1])
             if db.hasCard( payload[1]):
                 logger.info("tag found: %s " % payload[1])
-                mqtt.publish(baseOutTopic + "/usedTag", '{"payload":"' + payload[1] + '"}' )
+                mqtt.publish(baseOutTopic + "/all/notification", json.dumps( { "action": "acceptedRFID", "tag": payload[1] } ))
                 unlockDoor( payload[1] )
             elif (saveRFID):
                 db.addCard( payload[1])
                 logger.info("tag saved: %s " % payload[1])
-                mqtt.publish(baseOutTopic + "/savedRFID", '{"payload":"' + payload[1] + '"}' )
+                mqtt.publish(baseOutTopic + "/all/notification", json.dumps( { "action": "savedRFID", "tag": payload[1] } ))
                 music.playSong("beeps2")
             else:
                 LCDScreen.publish( "Unknown RFID tag")
-                mqtt.publish(baseOutTopic + "/unknownRFID",'{"payload":"' + payload[1] + '"}' )
+                mqtt.publish(baseOutTopic + "/all/notification", json.dumps( { "action": "rejectedRFID", "tag": payload[1]  } ))
             saveRFID=False
 
         elif  payload[0] == "door/temperature":
             getAndSendTemperature()
         elif pinIndex > 0:
-        	water(pinIndex, payload[1], payload[0])
+            water(pinIndex, payload[1], payload[0])
         elif payload[0] == const.EVENT_WATER1  or payload[0]=="water1":
-        	water(2, payload[1], "balcony")
+            water(2, payload[1], "balcony")
         elif payload[0] == const.EVENT_WATER3  or payload[0]=="water3":
-        	water(3, payload[1], "alley")
+            water(3, payload[1], "alley")
         elif payload[0] == const.EVENT_WATEROFF or payload[0]=="water/off":
-        	AllWaterOff()
+            AllWaterOff()
         elif payload[0] == const.EVENT_UNLOCK or payload[0]=="door/unlock":
-        	unlockDoor( payload[1] )
+            unlockDoor( payload[1] )
         elif payload[0] == const.EVENT_LOCK or payload[0]=="door/lock":
-                lockDoor()
-        elif payload[0] == const.MQTT_MESSAGE:
-                mqtt.publish( baseOutTopic + "/message", vals[0])
+            lockDoor()
+        elif payload[0] == const.EVENT_MQTT_MESSAGE:
+            mqtt.publish( baseOutTopic + "/all/notification", json.dumps( {'message': payload[1] } ))
         elif payload[0] == const.EVENT_NEXTTRAIN:
             if payload[1] >= 0:
                 LCDScreen.display("NEXT TRAIN IN\n{minutes:.0f}:{seconds:.0f} ".format( minutes=payload[1]//60, seconds=payload[1]%60 ) )
@@ -184,42 +184,39 @@ def dispatcherLoop( ):
             logger.error("Unknown event: %s " % payload[0])
 
 def getAndSendTemperature():
-    vals = pins.readTemperature()
-    LCDScreen.publish("Temperature:{:.1f} \nHumidity:   {:.1f}%".format(*vals))
-    #TODO make it all JSON
-    mqtt.publish( baseOutTopic + "/all/weather","{:.1f}".format(vals[0]))
-    mqtt.publish( baseOutTopic + "/all/humidity","{:.1f}".format(vals[1]))
-    mqtt.publish( baseOutTopic + "/all/dewpoint","{:.1f}".format(vals[2]))
+    weather = pins.readTemperature()
+    LCDScreen.publish("Temperature:{:.1f} \nHumidity:   {:.1f}%".format( weather['temperature'], weather['humidity']))
+    mqtt.publish( baseOutTopic + "/all/weather",json.dumps( weather ))
 
 
 def unlockDoor( howUnlocked = "Unknown" ):
-	pins.unlock()
-	LCDScreen.display("DOOR UNLOCKED " )
-	music.playSong("long")
-	mqtt.publish( baseOutTopic + "/all/unlocked", howUnlocked )
+    pins.unlock()
+    LCDScreen.display("DOOR UNLOCKED " )
+    music.playSong("long")
+    mqtt.publish( baseOutTopic + "/all/door", json.dumps( {'what':'unlocked', 'method': howUnlocked }) )
 
 def lockDoor( ): 
-	pins.lock()
-	LCDScreen.display("DOOR LOCKED " )
-	music.stopPlay()
-	mqtt.publish( baseOutTopic + "/all/locked")
+    pins.lock()
+    LCDScreen.display("DOOR LOCKED " )
+    music.stopPlay()
+    mqtt.publish( baseOutTopic + '/all/door', json.dumps( {'what':'locked' }) )
 
 def AllWaterOff():
-	pins.disableAllPins()
-	LCDScreen.publish( "All Pins Off" )
-	mqtt.publish(baseOutTopic + "/all/water/off", "0")
+    pins.disableAllPins()
+    LCDScreen.publish( "All Pins Off" )
+    mqtt.publish(baseOutTopic + '/all/water', json.dumps( {'what':'off' }) )
 
 def water( pin, duration, where="unknown"): 
     duration = int(duration)
     if duration <0  :
-            pins.disablePin( pin )
-            LCDScreen.publish( "Water #%s off " % (where))
-            mqtt.publish(baseOutTopic + "/all/%s/off" % where )
+        pins.disablePin( pin )
+        LCDScreen.publish( "Water #%s off " % (where))
+        mqtt.publish(baseOutTopic + "/all/water", json.dumps( {'where': where, 'what':'off' }) )
     else:
-            pins.water(pin, duration)
-            LCDScreen.publish( "Water #%s for  %s sec" % (where, duration))
-            mqtt.publish(baseOutTopic + "/all/%s/%s" % (where,  duration))
-            
+        pins.water(pin, duration)
+        LCDScreen.publish( "Water #%s for  %s sec" % (where, duration))
+        mqtt.publish(baseOutTopic + "/all/water", json.dumps( {'where': where, 'what':'on', 'duration': duration }) )
+
 
 if __name__ == "__main__":
     # cleanup before and after

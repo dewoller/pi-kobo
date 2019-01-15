@@ -69,10 +69,11 @@ class Pins:
         logger.info( "Disabling pin {} latestoff {} compared to time {}  ".format( pinIndex, latestOffTime[ pinIndex ],time.time()))
         latestOffTime[ pinIndex ] = -1
         self.GPIO_output(wateringPins[ pinIndex ], P.OFF)
+
         if pinIndex ==0 :
-            eventQueue.put([const.MQTT_MESSAGE, 'door unlock'  ])
+            self.eventQueue.put([const.EVENT_MQTT_MESSAGE, 'door unlock'  ])
         else:
-            eventQueue.put([const.MQTT_MESSAGE, 'water off pin # {}" % pinIndex])
+            self.eventQueue.put([const.EVENT_MQTT_MESSAGE, 'water off pin # {}'.format( pinIndex ) ])
 
     def disableAllPins(self ):
         for pinIndex in range(len(wateringPins)):
@@ -93,22 +94,15 @@ class Pins:
         self.disablePin( lockPinIndex )
 
     def readTemperature( self ):
-        return readTemp()
+        with SHT1x(sht1x_clkPin , sht1x_dataPin , gpio_mode=GPIO.BOARD) as sensor:
+            temp = sensor.read_temperature()
+            humidity = sensor.read_humidity(temp)
+        rv = {'temperature': temp, 'humidity': humidity}
+        return rv
 
     def cleanup( self ):
         GPIO.cleanup()
 
-def readTemp( ):
-
-    with SHT1x(sht1x_clkPin , sht1x_dataPin , gpio_mode=GPIO.BOARD) as sensor:
-        temp = sensor.read_temperature()
-        humidity = sensor.read_humidity(temp)
-        sensor.calculate_dew_point(temp, humidity)
-        print(sensor)
-
-        logger.info("Temperature: {} ".format(sensor))
-        return [sensor]
-   
  
 GPIO.setmode(GPIO.BOARD)
 
